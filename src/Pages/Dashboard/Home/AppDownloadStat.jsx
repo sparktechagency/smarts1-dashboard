@@ -108,10 +108,10 @@ const CustomTooltip = ({ active, payload }) => {
     return (
       <div className="relative flex items-center ml-4">
         {/* Arrow (pointing left) */}
-        <div className="absolute w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white -left-2"></div>
+        <div className="absolute w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-white -left-1.5"></div>
 
         {/* Tooltip Content */}
-        <div className="bg-white p-2 text-black rounded shadow-md">
+        <div className="bg-white p-2 text-[14px] text-black rounded shadow-md">
           {payload.map((pld, index) => (
             <div key={index}>{pld.value}K</div>
           ))}

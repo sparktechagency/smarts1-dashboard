@@ -282,11 +282,14 @@ const Sidebar = ({ isCollapsed }) => {
 
   return (
     <div
-      className={`bg-quilocoP h-full shadow-md transition-all duration-300 ${
+      className={`bg-quilocoP h-full shadow-md transition-all duration-300  max-h-100  ${
         isCollapsed ? "w-[80px]" : "w-[280px]"
       }`}
     >
-      <Link to="/" className="flex items-center justify-center py-4 text-white">
+      <Link
+        to="/"
+        className="flex items-center justify-center py-4 text-white bg-white sticky z-50"
+      >
         <div className="w-full flex items-center justify-center bg-quilocoP px-4 py-3 -mt-1.5 gap-3 rounded-lg">
           <TbDashboard size={40} className="text-sky-500" />
           {!isCollapsed && (
@@ -295,14 +298,24 @@ const Sidebar = ({ isCollapsed }) => {
           {/* <img src={"qilocoLogo"} /> */}
         </div>
       </Link>
-
-      <Menu
-        mode="inline"
-        selectedKeys={[selectedKey]}
-        style={{ background: "#ffffff" }}
-        items={menuItems}
-        className="text-white mt-10"
-      />
+      <div
+        className=" h-full overflow-y-auto
+  [&::-webkit-scrollbar]:w-0
+  [&::-webkit-scrollbar-track]:rounded-full
+  [&::-webkit-scrollbar-track]:bg-gray-100
+  [&::-webkit-scrollbar-thumb]:rounded-full
+  [&::-webkit-scrollbar-thumb]:bg-gray-300
+  dark:[&::-webkit-scrollbar-track]:bg-neutral-700
+  dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500"
+      >
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          style={{ background: "#ffffff" }}
+          items={menuItems}
+          className="text-white mt-10 "
+        />
+      </div>
     </div>
   );
 };
