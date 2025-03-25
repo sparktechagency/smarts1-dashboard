@@ -14,6 +14,7 @@ import {
 import { MoreOutlined, DeleteFilled, EditFilled } from "@ant-design/icons";
 
 import ButtonEDU from "../../../components/common/ButtonEDU";
+import { MdMoreVert } from "react-icons/md";
 
 const AdminList = () => {
   // Initial data
@@ -412,7 +413,7 @@ const columns = (onEdit, onDelete) => [
         }
         trigger="hover"
       >
-        <MoreOutlined />
+        <MdMoreVert size={25} />
       </Popover>
     ),
   },

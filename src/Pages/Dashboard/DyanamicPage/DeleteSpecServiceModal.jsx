@@ -1,8 +1,8 @@
 import React from "react";
 import { Modal } from "antd";
-import ButtonEDU from "../../../../components/common/ButtonEDU";
+import ButtonEDU from "../../../components/common/ButtonEDU";
 
-function DeleteCategoryModal({
+function DeleteSpecServiceModal({
   isDeleteModalOpen,
   deletingRecord,
   onCancelDelete,
@@ -22,12 +22,16 @@ function DeleteCategoryModal({
           <span className="font-bold ml-1">{deletingRecord?.name}</span>?
         </div>
         <div className="flex justify-center gap-4">
-          <ButtonEDU actionType="cancel" onClick={onCancelDelete} />
-          <ButtonEDU actionType="delete" onClick={onConfirmDelete} />
+          <ButtonEDU actionType="cancel" onClick={onCancelDelete}>
+            Cancel
+          </ButtonEDU>
+          <ButtonEDU actionType="delete" onClick={onConfirmDelete}>
+            Delete
+          </ButtonEDU>
         </div>
       </div>
     </Modal>
   );
 }
 
-export default DeleteCategoryModal;
+export default DeleteSpecServiceModal;

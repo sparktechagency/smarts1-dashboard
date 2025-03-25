@@ -22,8 +22,12 @@ function DeleteCategoryModal({
           <span className="font-bold ml-1">{deletingRecord?.name}</span>?
         </div>
         <div className="flex justify-center gap-4">
-          <ButtonEDU actionType="cancel" onClick={onCancelDelete} />
-          <ButtonEDU actionType="delete" onClick={onConfirmDelete} />
+          <ButtonEDU actionType="cancel" onClick={onCancelDelete}>
+            Cancel
+          </ButtonEDU>
+          <ButtonEDU actionType="delete" onClick={onConfirmDelete}>
+            Delete
+          </ButtonEDU>
         </div>
       </div>
     </Modal>

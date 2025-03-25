@@ -93,7 +93,7 @@ function EditSpecServiceModal({
           </Form.Item>
 
           <div className="flex justify-end">
-            <ButtonEDU actionType="save" />
+            <ButtonEDU actionType="save">Save</ButtonEDU>
           </div>
         </Form>
       </ConfigProvider>

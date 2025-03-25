@@ -118,36 +118,18 @@ const Sidebar = ({ isCollapsed }) => {
             <Link to="/category-list">Category List</Link>
           ),
         },
-        {
-          key: "/service-list",
-          icon: <MdHandyman size={24} />,
-          label: isCollapsed ? (
-            <Link to="/service-list">Service List</Link>
-          ) : (
-            <Link to="/service-list">Service List</Link>
-          ),
-        },
+        // {
+        //   key: "/service-list",
+        //   icon: <MdHandyman size={24} />,
+        //   label: isCollapsed ? (
+        //     <Link to="/service-list">Service List</Link>
+        //   ) : (
+        //     <Link to="/service-list">Service List</Link>
+        //   ),
+        // },
       ],
     },
-    // {
 
-    // {
-    //     key: "/users",
-    //     icon: <HiUserGroup size={24} />,
-    //     label: <Link to="/users">User</Link>
-    // },
-
-    /* {
-            key: "/admin",
-            icon: <MdOutlineAdminPanelSettings size={24} />,
-            label: <Link to="/admin">Make Admin</Link>
-        }, */
-
-    // {
-    //     key: "/sub-category",
-    //     icon: <BiSolidCategory size={24} />,
-    //     label: <Link to="/sub-category" >Sub Category</Link>
-    // },
     {
       key: "/support-chat",
       icon: <PiMessengerLogoBold size={24} />,
@@ -309,11 +291,18 @@ const Sidebar = ({ isCollapsed }) => {
   dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500"
       >
         <Menu
+          // selectedKeys={[selectedKey]}
+          // style={{ background: "#ffffff" }}
+          // items={menuItems}
+          // className="text-white mt-10 "
+          // mode="inline"
+
           mode="inline"
           selectedKeys={[selectedKey]}
-          style={{ background: "#ffffff" }}
+          // style={{ background: "#232323" }}
           items={menuItems}
-          className="text-white mt-10 "
+          inlineCollapsed={isCollapsed}
+          className="text-white  bg-white my-auto "
         />
       </div>
     </div>

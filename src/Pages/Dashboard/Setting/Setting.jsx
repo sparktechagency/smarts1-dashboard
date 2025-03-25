@@ -17,6 +17,11 @@ const items = [
     label: "Password",
     children: <AdminPassword />,
   },
+  {
+    key: "rofile",
+    label: "Profile",
+    children: <AdminPassword />,
+  },
 ];
 function Setting() {
   return (

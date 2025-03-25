@@ -21,7 +21,6 @@ import Customer from "../Pages/Dashboard/Customer/Customer.jsx";
 import PushNotification from "../Pages/Dashboard/PushNotification/PushNotification.jsx";
 import BookingList from "../Pages/Dashboard/Booking/BookingList.jsx";
 import CategoryList from "../Pages/Dashboard/Service/CategoryList/CategoryList.jsx";
-import ServiceList from "../Pages/Dashboard/Service/ServiceList/ServiceList.jsx";
 import SpecificService from "../Pages/Dashboard/DyanamicPage/SpecificService.jsx";
 import SupportChat from "../Pages/Dashboard/SupportChat/SupportChat.jsx";
 import ChatRoom from "../Pages/Dashboard/SupportChat/ChatRoom.jsx";
@@ -132,10 +131,10 @@ const router = createBrowserRouter([
         path: "/category-list",
         element: <CategoryList />,
       },
-      {
-        path: "/service-list",
-        element: <ServiceList />,
-      },
+      // {
+      //   path: "/service-list",
+      //   element: <ServiceList />,
+      // },
     ],
   },
   {

@@ -15,9 +15,10 @@ import { HiDotsVertical } from "react-icons/hi";
 import cleaning from "../../../assets/cleaning.png";
 import { IoEye } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import DeleteServiceModal from "../Service/ServiceList/DeleteServiceModal";
+
 import EditSpecServiceModal from "./EditSpecServiceModal";
 import GetPageName from "../../../components/common/GetPageName";
+import DeleteSpecServiceModal from "./DeleteSpecServiceModal";
 
 function SpecificServiceTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -300,7 +301,7 @@ function SpecificServiceTable() {
         handleImageUpload={handleImageUpload}
         isEditing={isEditing}
       />
-      <DeleteServiceModal
+      <DeleteSpecServiceModal
         isDeleteModalOpen={isDeleteModalOpen}
         deletingRecord={deletingRecord}
         onConfirmDelete={onConfirmDelete}
