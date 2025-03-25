@@ -270,7 +270,7 @@ const Sidebar = ({ isCollapsed }) => {
     >
       <Link
         to="/"
-        className="flex items-center justify-center py-4 text-white bg-white sticky z-50"
+        className="flex items-center justify-center py-4 text-white bg-white sticky z-50 mb-10"
       >
         <div className="w-full flex items-center justify-center bg-quilocoP px-4 py-3 -mt-1.5 gap-3 rounded-lg">
           <TbDashboard size={40} className="text-sky-500" />
@@ -281,7 +281,7 @@ const Sidebar = ({ isCollapsed }) => {
         </div>
       </Link>
       <div
-        className=" h-full overflow-y-auto
+        className=" h-[80%]  overflow-y-auto
   [&::-webkit-scrollbar]:w-0
   [&::-webkit-scrollbar-track]:rounded-full
   [&::-webkit-scrollbar-track]:bg-gray-100
@@ -291,15 +291,8 @@ const Sidebar = ({ isCollapsed }) => {
   dark:[&::-webkit-scrollbar-thumb]:bg-neutral-500"
       >
         <Menu
-          // selectedKeys={[selectedKey]}
-          // style={{ background: "#ffffff" }}
-          // items={menuItems}
-          // className="text-white mt-10 "
-          // mode="inline"
-
           mode="inline"
           selectedKeys={[selectedKey]}
-          // style={{ background: "#232323" }}
           items={menuItems}
           inlineCollapsed={isCollapsed}
           className="text-white  bg-white my-auto "
