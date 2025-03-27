@@ -93,7 +93,7 @@ function Report() {
           defaultPageSize: 5,
           position: ["bottomRight"],
           size: "default",
-          total: userData.length,
+          total: 50,
           showSizeChanger: true,
           showQuickJumper: true,
         }}

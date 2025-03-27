@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Avatar, ConfigProvider, Input, Button } from "antd";
+import { Table, Avatar, ConfigProvider, Input, Button, message } from "antd";
 import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import PopOver from "../../../components/common/PopOver";
@@ -45,7 +45,7 @@ function ServiceProvidersList() {
         user.key === provider.key ? { ...user, banned: !user.banned } : user
       )
     );
-    alert(
+    message.success(
       `${provider.providersname} has been ${
         provider.banned ? "unbanned" : "banned"
       }`

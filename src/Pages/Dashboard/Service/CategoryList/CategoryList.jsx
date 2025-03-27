@@ -207,11 +207,6 @@ function CategoryList() {
       title: "Sl",
       dataIndex: "serial",
       key: "serial",
-      render: (serial) => (
-        <p className="font-bold text-black text-[16px]">
-          {serial < 10 ? "0" + serial : serial}
-        </p>
-      ),
     },
     {
       title: "Category",

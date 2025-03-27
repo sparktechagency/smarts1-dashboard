@@ -61,18 +61,18 @@ const Sidebar = ({ isCollapsed }) => {
           key: "/customer-list",
           icon: <HiUsers size={23} />,
           label: isCollapsed ? (
-            <Link to="/customer-list">customer</Link>
+            <Link to="/customer-list">Customer</Link>
           ) : (
-            <Link to="/customer-list">customer</Link>
+            <Link to="/customer-list">Customer</Link>
           ),
         },
         {
           key: "/service-provider-list",
           icon: <FaHandsHelping size={24} />,
           label: isCollapsed ? (
-            <Link to="/service-provider-list">serviceproviders</Link>
+            <Link to="/service-provider-list">Service Providers</Link>
           ) : (
-            <Link to="/service-provider-list">serviceproviders</Link>
+            <Link to="/service-provider-list">Service Providers</Link>
           ),
         },
       ],
@@ -118,15 +118,7 @@ const Sidebar = ({ isCollapsed }) => {
             <Link to="/category-list">Category List</Link>
           ),
         },
-        // {
-        //   key: "/service-list",
-        //   icon: <MdHandyman size={24} />,
-        //   label: isCollapsed ? (
-        //     <Link to="/service-list">Service List</Link>
-        //   ) : (
-        //     <Link to="/service-list">Service List</Link>
-        //   ),
-        // },
+       
       ],
     },
 

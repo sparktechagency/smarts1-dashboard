@@ -13,12 +13,12 @@ import { FiEdit2 } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { HiDotsVertical } from "react-icons/hi";
 import cleaning from "../../../assets/cleaning.png";
-import { IoEye } from "react-icons/io5";
-import { Link } from "react-router-dom";
 
+import { IoMdArrowRoundBack } from "react-icons/io";
 import EditSpecServiceModal from "./EditSpecServiceModal";
 import GetPageName from "../../../components/common/GetPageName";
 import DeleteSpecServiceModal from "./DeleteSpecServiceModal";
+import { Link } from "react-router-dom";
 
 function SpecificServiceTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -248,7 +248,13 @@ function SpecificServiceTable() {
   return (
     <div>
       <div className="flex justify-between items-center py-5">
-        <h1 className="text-[20px] font-medium">{GetPageName()}</h1>
+        <Link to="/category-list" className="flex gap-1 items-center">
+          <IoMdArrowRoundBack size={20} />{" "}
+          <p className="text-[16px] text-black">Back</p>
+        </Link>
+        <h1 className="text-[20px] font-medium border px-2 py-1.5 rounded-md border-smart">
+          {GetPageName()}
+        </h1>
         <div className="flex gap-3">
           <Input
             placeholder="Search by Category, Total Service, or Price Range"
@@ -284,6 +290,8 @@ function SpecificServiceTable() {
           pagination={{
             defaultPageSize: 5,
             position: ["bottomRight"],
+            size: "default",
+            total: 50,
             showSizeChanger: true,
             showQuickJumper: true,
           }}

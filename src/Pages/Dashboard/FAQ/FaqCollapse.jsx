@@ -11,7 +11,7 @@ export const HeadFaq = ({ showModal }) => (
   <div className="flex justify-between items-center py-5">
     <h1 className="text-[20px] font-medium">FAQ</h1>
     <button
-      className="bg-smart text-white px-4 py-2.5 rounded-md shadow-md"
+      className="bg-smart text-white px-4 py-2 text-sm rounded-md shadow-md"
       onClick={showModal}
     >
       <PlusOutlined size={24} className="mr-2" />
