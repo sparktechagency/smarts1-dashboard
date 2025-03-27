@@ -194,7 +194,7 @@ const Header = ({ toggleSidebar }) => {
             </Link>
           </div>
           {/* User Profile */}
-          <Link to="/setting" className="flex items-center gap-3">
+          <Link to="/admin-list" className="flex items-center gap-3">
             <Avatar shape="square" size={60} className="rounded" src={src} />
           </Link>
           {/* Dropdown Menu */}
