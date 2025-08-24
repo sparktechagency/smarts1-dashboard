@@ -1,44 +1,45 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, Avatar, ConfigProvider, Input, Button, message } from "antd";
 import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import PopOver from "../../../components/common/PopOver";
-import ServiceEditModal from "./ServiceEditModal"; // Import modal
+
 import { LuDownload } from "react-icons/lu";
 
-function ServiceProvidersList() {
+import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
+import { getSearchParams } from "../../../utility/getSearchParams";
+import { useGetServiceProvidersQuery } from "../../../redux/apiSlices/serviceProviderSlice";
+
+function ServiceProvider() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [userData, setUserData] = useState(data);
+  const [userData, setUserData] = useState([]); // Initialize with empty array
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-  };
+  const { data: serviceProvidersData, isLoading, refetch } = useGetServiceProvidersQuery(); // Replace with service provider API query
+  const updateSearchParams = useUpdateSearchParams();
+  const { searchTerm, page } = getSearchParams();
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredData = userData.filter(
-    (user) =>
-      user.providersname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.phoneNumber.includes(searchQuery) ||
-      user.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.earn.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    refetch();
+  }, [searchTerm, page]);
+
+  useEffect(() => {
+    updateSearchParams({ page: currentPage });
+  }, [currentPage]);
 
   const rowSelection = {
     selectedRowKeys,
     onChange: setSelectedRowKeys,
   };
 
-  // Handle edit button click
   const handleEdit = (record) => {
     setSelectedProvider(record); // Store selected provider's data
     setIsModalOpen(true); // Open modal
   };
 
-  // Handle ban functionality
   const handleBan = (provider) => {
     setUserData((prevData) =>
       prevData.map((user) =>
@@ -46,13 +47,12 @@ function ServiceProvidersList() {
       )
     );
     message.success(
-      `${provider.providersname} has been ${
+      `${provider.full_name} has been ${
         provider.banned ? "unbanned" : "banned"
       }`
     );
   };
 
-  // Handle saving edited provider
   const handleSave = (updatedProvider) => {
     setUserData((prevData) =>
       prevData.map((user) =>
@@ -95,7 +95,9 @@ function ServiceProvidersList() {
         <div className="flex gap-3">
           <Input
             placeholder="Search by Name, Email or Phone"
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(value) => {
+              updateSearchParams({ searchTerm: value.target.value });
+            }}
             prefix={<SearchOutlined />}
             className="h-9 gap-2"
             allowClear
@@ -122,96 +124,69 @@ function ServiceProvidersList() {
       <Table
         rowSelection={rowSelection}
         columns={columns(handleEdit, handleBan)} // Pass handleEdit and handleBan to columns
-        dataSource={filteredData}
+        dataSource={serviceProvidersData?.result}
         pagination={{
-          defaultPageSize: 5,
+          defaultPageSize: serviceProvidersData?.meta?.limit,
           position: ["bottomRight"],
           size: "default",
-          total: 50,
+          current: currentPage,
+          total: serviceProvidersData?.meta?.total,
           showSizeChanger: true,
           showQuickJumper: true,
+          onChange: (page) => setCurrentPage(page),
         }}
-      />
-      {/* Edit Modal */}
-      <ServiceEditModal
-        isModalOpen={isModalOpen}
-        handleCancel={() => setIsModalOpen(false)}
-        providerData={selectedProvider}
-        onSave={handleSave}
-      />
+      />      
     </ConfigProvider>
   );
 }
 
-export default ServiceProvidersList;
+export default ServiceProvider;
 
 const columns = (handleEdit, handleBan) => [
   {
-    title: "Service Provider Name",
-    dataIndex: "providersname",
-    key: "providersname",
+    title: "Provider Name",
+    dataIndex: "full_name",
+    key: "full_name",
     render: (text, record) => (
       <div className="flex items-center gap-2.5">
-        <Avatar src={record.avatar} alt={text} shape="circle" size={40} />
+        <Avatar
+          src={record.image ? record.image : "placeholder.png"}
+          alt={text}
+          shape="circle"
+          size={40}
+        />
         <div className="flex flex-col">
-          <span>{text}</span>
-          <span>{record.email}</span>
+          <span className="font-semibold">{text}</span>
+          <span className="text-[12px]">{record.email}</span>
         </div>
       </div>
     ),
   },
-  {
-    title: "Category",
-    dataIndex: "category",
-    key: "category",
-  },
+
   {
     title: "Phone Number",
-    dataIndex: "phoneNumber",
-    key: "phoneNumber",
+    dataIndex: "phone",
+    key: "phone",
   },
   {
-    title: "Address",
-    dataIndex: "address",
-    key: "address",
+    title: "Revenue Percentage",
+    dataIndex: "adminRevenuePercent",
+    key: "adminRevenuePercent",
+    render: (value) => `${value}%`,
   },
   {
-    title: "Earn",
-    dataIndex: "earn",
-    key: "earn",
+    title: "Total Earned",
+    dataIndex: "totalEarn",
+    key: "totalEarn",
+    render: (value) => `$${value}`,
   },
   {
     key: "action",
     render: (text, record) => (
       <PopOver
-        onEdit={() => handleEdit(record)}
+        onDelete={() => handleEdit(record)}
         onBan={() => handleBan(record)} // Pass the handleBan function
       />
     ),
-  },
-];
-
-const data = [
-  {
-    key: 1,
-    providersname: "John Doe",
-    email: "johndoe@gmail.com",
-    category: "Plumbing",
-    phoneNumber: "+1234567890",
-    address: "10 Warehouse Road, Apapa, Lagos",
-    earn: "$5000",
-    avatar: "",
-    banned: false, // Add banned field
-  },
-  {
-    key: 2,
-    providersname: "Jane Smith",
-    email: "janesmith@gmail.com",
-    category: "Electrical",
-    phoneNumber: "+1234567891",
-    address: "15 Broad Street, Lagos",
-    earn: "$4500",
-    avatar: "",
-    banned: false, // Add banned field
   },
 ];

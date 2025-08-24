@@ -11,6 +11,7 @@ import {
 import { MdOutlineDateRange } from "react-icons/md";
 import { DatePicker } from "antd";
 import PickDate from "../../../components/common/PickDate";
+import { useGetRevenueAnalyticsQuery } from "../../../redux/apiSlices/dashboardSlice";
 
 function generateRandomData() {
   return [
@@ -35,25 +36,50 @@ function getRandomPv() {
 
 const data = generateRandomData();
 
+
+const initialYear = new Date().getFullYear();
+
 export default function RevenueAnalysis() {
   const [isDateSelected, setIsDateSelected] = useState(false);
+  const [year, setYear] = useState(initialYear);
 
-  const onChange = (date, dateString) => {
-    console.log(date, dateString);
-    setIsDateSelected(!!date); // Update state based on date selection
+  const { data: revenueData } = useGetRevenueAnalyticsQuery(year);
+
+  console.log("revenueData", revenueData);
+
+  const onChange = (date) => {
+    setYear(date.get("year"));
+    setIsDateSelected(!isDateSelected);
   };
 
   return (
     <div className="w-[68%] h-full rounded-lg bg-white">
       <div className="flex items-center justify-between px-6 my-5 relative">
-        <h1 className="text-2xl font-semibold">Customer & Service Provider</h1>
+        <h1 className="text-2xl font-semibold">Revenue Analytics</h1>
 
-        <PickDate />
+        <DatePicker
+          // onChange={(value) => setYear(value.get("year"))}
+          onChange={onChange}
+          picker="year"
+          className="border-1 h-8 w-28 py-2 rounded-lg"
+          suffixIcon={
+            <div
+              className="rounded-full w-6 h-6 p-1 flex items-center justify-center"
+              style={{
+                backgroundColor: isDateSelected ? "#18a0fb" : "#c3e3f7",
+              }}
+            >
+              <MdOutlineDateRange
+                color={isDateSelected ? "white" : "#18a0fb"}
+              />
+            </div>
+          }
+        />
       </div>
 
       <ResponsiveContainer width="100%" height={205}>
         <AreaChart
-          data={data}
+          data={revenueData}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
         >
           <defs>
@@ -79,7 +105,7 @@ export default function RevenueAnalysis() {
 
           <Area
             type="monotone"
-            dataKey="pv"
+            dataKey="revenue"
             stroke=""
             fillOpacity={1}
             fill="url(#colorPv)"

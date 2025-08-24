@@ -1,15 +1,50 @@
 import { Button, Checkbox, Form, Input } from "antd";
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import FormItem from "../../components/common/FormItem";
-// import Cookies from "js-cookie";
+import { useLoginMutation } from "../../redux/apiSlices/authSlice";
+import toast from "react-hot-toast";
+import { useForm } from "antd/es/form/Form";
+import Cookies from "js-cookie";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [login, {isLoading}] = useLoginMutation();
+
+  const [form] = useForm()
+
+    useEffect(() => {
+    const storedData = localStorage.getItem("auth");
+    if (storedData) {
+      form.setFieldsValue(JSON.parse(storedData));
+    }
+  }, []);
+
 
   const onFinish = async (values) => {
-    navigate("/");
-    // Cookies.set('token', token, { expires: 7 })
+
+    try {
+      console.log("values", values)
+      // const res = await login(values);
+  const res = await login(values).unwrap();  
+    
+    console.log("res", res);
+    
+    toast.success(res?.message);
+    Cookies.set("accessToken", res?.data?.accessToken);
+    Cookies.set("refreshToken", res?.data?.refreshToken);
+  
+    if (res?.success && values?.remember) {
+      localStorage.setItem("auth",JSON.stringify({email: values?.email, password: values?.password,}));
+    }
+
+    navigate("/")
+
+    form.resetFields();
+    } catch (error) {
+      console.log("sdafasdf", error)
+      //  toast.error((error)?.data?.message)
+    }
   };
 
   return (
@@ -18,7 +53,7 @@ const Login = () => {
         <h1 className="text-[25px] font-semibold mb-6">Login</h1>
         <p>Please enter your email and password to continue</p>
       </div>
-      <Form onFinish={onFinish} layout="vertical">
+      <Form form={form} onFinish={onFinish} layout="vertical">
         <Form.Item
           name="email"
           label={

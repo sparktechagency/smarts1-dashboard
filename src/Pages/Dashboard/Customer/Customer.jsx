@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, Avatar, ConfigProvider, Input, Button, message } from "antd";
 import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import PopOver from "../../../components/common/PopOver";
 import CustomerEditModal from "./CustomerEditModal";
 import { LuDownload } from "react-icons/lu";
+import { useGetCustomersQuery } from "../../../redux/apiSlices/customersSlice";
+import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
+import { getSearchParams } from "../../../utility/getSearchParams";
 
 function Customer() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -13,19 +16,18 @@ function Customer() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
 
-  const handleSearch = (value) => {
-    setSearchQuery(value);
-  };
+  const { data: customersData, isLoading, refetch } = useGetCustomersQuery();
+  const  updateSearchParams  = useUpdateSearchParams();
+  const {  searchTerm,  page } = getSearchParams();
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const filteredData = userData.filter(
-    (user) =>
-      user.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.phoneNumber.includes(searchQuery) ||
-      // user.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.spent.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {    
+    refetch();
+  }, [ searchTerm,  page]);
+
+  useEffect(() => {  
+  updateSearchParams({ page:  currentPage});
+}, [currentPage]);
 
   const rowSelection = {
     selectedRowKeys,
@@ -95,7 +97,10 @@ function Customer() {
         <div className="flex gap-3">
           <Input
             placeholder="Search by Name, Email or Phone"
-            onChange={(e) => handleSearch(e.target.value)}
+             onChange={(value) => {
+                  updateSearchParams({ searchTerm: value.target.value });
+                }}
+            // onChange={(e) => console.log(e.target.value)}
             prefix={<SearchOutlined />}
             className="h-9 gap-2"
             allowClear
@@ -122,14 +127,16 @@ function Customer() {
       <Table
         rowSelection={rowSelection}
         columns={columns(handleEdit, handleBan)} // Pass handleEdit and handleBan to columns
-        dataSource={filteredData}
+        dataSource={customersData?.result}
         pagination={{
-          defaultPageSize: 5,
+          defaultPageSize: customersData?.meta?.limit,
           position: ["bottomRight"],
           size: "default",
-          total: 50,
+          current: currentPage,
+          total: customersData?.meta?.total,
           showSizeChanger: true,
           showQuickJumper: true,
+          onChange: (page) => setCurrentPage(page),  
         }}
       />
       {/* Edit Modal */}
@@ -148,14 +155,19 @@ export default Customer;
 const columns = (handleEdit, handleBan) => [
   {
     title: "Customer Name",
-    dataIndex: "customerName",
-    key: "customerName",
+    dataIndex: "full_name",
+    key: "full_name",
     render: (text, record) => (
       <div className="flex items-center gap-2.5">
-        <Avatar src={record.avatar} alt={text} shape="circle" size={40} />
+        <Avatar
+          src={record.image ? record.image : "placeholder.png"}
+          alt={text}
+          shape="circle"
+          size={40}
+        />
         <div className="flex flex-col">
-          <span>{text}</span>
-          <span>{record.email}</span>
+          <span className="font-semibold">{text}</span>
+          <span className="text-[12px]">{record.email}</span>
         </div>
       </div>
     ),
@@ -163,8 +175,8 @@ const columns = (handleEdit, handleBan) => [
 
   {
     title: "Phone Number",
-    dataIndex: "phoneNumber",
-    key: "phoneNumber",
+    dataIndex: "phone",
+    key: "phone",
   },
   {
     title: "Address",
@@ -173,14 +185,14 @@ const columns = (handleEdit, handleBan) => [
   },
   {
     title: "Spent",
-    dataIndex: "spent",
-    key: "spent",
+    dataIndex: "totalAmount",
+    key: "totalAmount",
   },
   {
     key: "action",
     render: (text, record) => (
       <PopOver
-        onEdit={() => handleEdit(record)}
+        onDelete={() => handleEdit(record)}
         onBan={() => handleBan(record)} // Pass the handleBan function
       />
     ),

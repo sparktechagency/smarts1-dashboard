@@ -24,17 +24,42 @@ import {
 } from "react-icons/md";
 import { MdOutlinePrivacyTip } from "react-icons/md";
 import { IoDocumentTextOutline } from "react-icons/io5";
+import Cookies from "js-cookie";
 
 const Sidebar = ({ isCollapsed }) => {
   const location = useLocation();
   const path = location.pathname;
   const [selectedKey, setSelectedKey] = useState("");
-  const [openKeys, setOpenKeys] = useState([]);
-  const navigate = useNavigate();
+    const [openKeys, setOpenKeys] = useState([]);
 
+     useEffect(() => {
+    const selectedItem = menuItems.find(
+      (item) =>
+        item.key === path || item.children?.some((sub) => sub.key === path)
+    );
+
+    if (selectedItem) {
+      setSelectedKey(path);
+
+      if (selectedItem.children) {
+        setOpenKeys([selectedItem.key]);
+      } else {
+        const parentItem = menuItems.find((item) =>
+          item.children?.some((sub) => sub.key === path)
+        );
+        if (parentItem) {
+          setOpenKeys([parentItem.key]);
+        }
+      }
+    }
+  }, [path]);
+  
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/auth/login");
+    console.log("hit on l");
+    
+    Cookies.remove("accessToken")
+    Cookies.remove("refreshToken")
+    window.location.reload()        
   };
 
   const menuItems = [

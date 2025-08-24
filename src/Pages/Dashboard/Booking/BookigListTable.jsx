@@ -8,11 +8,14 @@ import {
   Typography,
   ConfigProvider,
   Button,
+  DatePicker,
 } from "antd";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { FiEdit3 } from "react-icons/fi";
 import GetPageName from "../../../components/common/GetPageName";
 import SelectDuration from "../../../components/common/SelectDuration";
+import { useGetBookingSummaryQuery } from "../../../redux/apiSlices/bookingSlice";
+import { render } from "react-dom";
 
 const originData = Array.from({ length: 20 }).map((_, i) => ({
   key: i.toString(),
@@ -33,6 +36,7 @@ const EditableCell = ({
   ...restProps
 }) => {
   const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
+
   return (
     <td {...restProps}>
       {editing ? (
@@ -56,6 +60,11 @@ const BookingListTable = () => {
   const [searchText, setSearchText] = useState("");
   const [editingKey, setEditingKey] = useState("");
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+
+  const currentDate = new Date().toISOString().split("T")[0];
+  const [date, setDate] = useState("2025-08-16");
+
+  const { data: bookingData } = useGetBookingSummaryQuery(date);
 
   const isEditing = (record) => record.key === editingKey;
 
@@ -85,89 +94,88 @@ const BookingListTable = () => {
     setData(data.filter((item) => item.key !== key));
   };
 
-  const filteredData = data.filter((item) =>
-    Object.values(item).some((val) =>
-      String(val).toLowerCase().includes(searchText.toLowerCase())
-    )
-  );
+  const onChange = (date, dateString) => {
+    // setDate(dateString);
+    setDate(dateString); // For debugging
+  };
 
-  const columns = [
-    { title: "Booking ID", dataIndex: "bookingID", width: "10%" },
-    {
-      title: "Customer",
-      dataIndex: "customername",
-      width: "20%",
-      editable: true,
-    },
-    {
-      title: "Service Provider",
-      dataIndex: "serviceProvider",
-      width: "20%",
-      editable: true,
-    },
-    { title: "Status", dataIndex: "status", width: "10%", editable: true },
-    {
-      title: "Scheduled Time",
-      dataIndex: "scheduledTime",
-      width: "20%",
-      editable: true,
-    },
-    { title: "Location", dataIndex: "location", width: "25%", editable: true },
-    {
-      title: "Action",
 
-      dataIndex: "action",
-      render: (_, record) => {
-        const editable = isEditing(record);
-        return editable ? (
-          <span>
-            <Typography.Link
-              onClick={() => save(record.key)}
-              style={{ marginRight: 8 }}
-              className="text-[14px] text-blue-600"
-            >
-              Save
-            </Typography.Link>
-            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-              <a className="text-[14px] text-blue-600">Cancel</a>
-            </Popconfirm>
-          </span>
-        ) : (
-          <div className="flex items-center gap-4 w-36">
-            <button
-              disabled={editingKey !== ""}
-              onClick={() => edit(record)}
-              className=" hover:text-sky-600"
-            >
-              <FiEdit3 size={20} />
+
+
+
+const columns = [
+  { title: "Booking ID", dataIndex: "acceptedBid", width: "10%" },
+  {
+    title: "Customer",
+    dataIndex: "user",
+    width: "20%",    
+    editable: true,
+    render: (user) => user ? user?.full_name : '',
+  },
+  {
+    title: "Service Provider",
+    dataIndex: "serviceProvider",
+    width: "20%",
+    editable: true,
+    render: (provider) => provider ? provider?.full_name : '',
+  },
+  { title: "Status", dataIndex: "status", width: "10%", editable: true,
+    render: (status) => (
+    <span className={`capitalize ${status === "cancelled" ? "text-red-600" : status === "inProgress" ? "text-blue-500" : "text-green-600"}`}>
+      {status}
+    </span>
+  ),
+   },
+  {
+    title: "Scheduled Time",
+    dataIndex: "scheduledTime",
+    width: "20%",
+    editable: true,
+  },
+  { title: "Location", dataIndex: "servicingDestination", width: "25%", editable: true },
+  {
+    title: "Action",
+    dataIndex: "action",
+    render: (_, record) => {
+      const editable = isEditing(record);
+      return editable ? (
+        <span>
+          <Typography.Link
+            onClick={() => save(record.key)}
+            style={{ marginRight: 8 }}
+            className="text-[14px] text-blue-600"
+          >
+            Save
+          </Typography.Link>
+          <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
+            <a className="text-[14px] text-blue-600">Cancel</a>
+          </Popconfirm>
+        </span>
+      ) : (
+        <div className="flex items-center gap-4 w-36">
+          <button
+            disabled={editingKey !== ""}
+            onClick={() => edit(record)}
+            className=" hover:text-sky-600"
+          >
+            <FiEdit3 size={20} />
+          </button>
+          <Popconfirm
+            title="Are you sure to delete?"
+            onConfirm={() => handleDelete(record.key)}
+          >
+            <button className=" hover:text-red-600">
+              <RiDeleteBin6Line size={20} />
             </button>
-            <Popconfirm
-              title="Are you sure to delete?"
-              onConfirm={() => handleDelete(record.key)}
-            >
-              <button className=" hover:text-red-600">
-                <RiDeleteBin6Line size={20} />
-              </button>
-            </Popconfirm>
-          </div>
-        );
-      },
+          </Popconfirm>
+        </div>
+      );
     },
-  ];
+  },
+];
 
-  const mergedColumns = columns.map((col) => ({
-    ...col,
-    onCell: (record) =>
-      col.editable
-        ? {
-            inputType: "text",
-            dataIndex: col.dataIndex,
-            title: col.title,
-            editing: isEditing(record),
-          }
-        : undefined,
-  }));
-
+  console.log("bookingData", bookingData);
+  
   return (
     <ConfigProvider
       theme={{
@@ -203,12 +211,15 @@ const BookingListTable = () => {
             allowClear
             style={{ width: 200, height: 40 }}
           />
-          <SelectDuration />
+
+          <div className="w-full flex justify-end mb-5">
+            <DatePicker onChange={onChange} />
+          </div>
         </div>
       </div>
 
       <Form form={form} component={false}>
-        <Table
+        {/* <Table
           rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
           components={{ body: { cell: EditableCell } }}
           bordered
@@ -224,7 +235,25 @@ const BookingListTable = () => {
             showSizeChanger: true,
             showQuickJumper: true,
           }}
-        />
+        /> */}
+
+         <Table
+      // rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
+      components={{ body: { cell: EditableCell } }}
+      bordered
+      dataSource={bookingData?.result}
+      columns={columns}
+      rowClassName="editable-row"
+      pagination={{
+        onChange: cancel,
+        defaultPageSize: bookingData?.meta?.limit,
+        position: ["bottomRight"],
+        size: "default",
+        total: bookingData?.meta?.total,
+        showSizeChanger: true,
+        showQuickJumper: true,
+      }}
+    />
       </Form>
     </ConfigProvider>
   );

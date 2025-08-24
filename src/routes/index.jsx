@@ -28,12 +28,13 @@ import DiscountCoupon from "../Pages/Dashboard/DiscountCoupon/DiscountCoupon.jsx
 import Report from "../Pages/Dashboard/Report/Report.jsx";
 import Slider from "../Pages/Dashboard/Slider/Slider.jsx";
 import OnboardingScreeen from "../Pages/Dashboard/OnboardingScreen/OnboardingScreeen.jsx";
+import PrivateRoute from "./ProtectedRoute.jsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
 
-    element: <Main />,
+    element: <PrivateRoute> <Main /> </PrivateRoute>,
     children: [
       {
         path: "/",
@@ -136,7 +137,7 @@ const router = createBrowserRouter([
       //   element: <ServiceList />,
       // },
     ],
-  },
+  },   
   {
     path: "/auth",
     element: <Auth />,

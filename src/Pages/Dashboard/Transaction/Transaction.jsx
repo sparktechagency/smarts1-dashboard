@@ -1,12 +1,21 @@
-import React, { useState } from "react";
-import { Table, Avatar, ConfigProvider, Input, Button } from "antd";
+import React, { useEffect, useState } from "react";
+import { Table, Avatar, ConfigProvider, Input, Button, Form } from "antd";
 import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
 
 import { RiDeleteBin6Line } from "react-icons/ri";
-import { IoEye } from "react-icons/io5";
+import { IoEye, IoSearch } from "react-icons/io5";
 
 import GetPageName from "../../../components/common/GetPageName";
 import { LuDownload } from "react-icons/lu";
+
+import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
+import { getSearchParams } from "../../../utility/getSearchParams";
+import { useGetTransactionsQuery } from "../../../redux/apiSlices/transactionSlice";
+import dayjs from "dayjs";
+import { imageUrl } from "../../../redux/api/baseApi";
+import FormItem from "antd/es/form/FormItem";
+import { useForm } from "antd/es/form/Form";
+
 
 // UserAvatar Component
 const UserAvatar = ({ shop }) => (
@@ -65,34 +74,33 @@ const initialData = [
   },
 ];
 
+
+
 function Transaction() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  
   const [data, setData] = useState(initialData);
+    const [currentPage, setCurrentPage] = useState(1);
+  const [form] = useForm()
+   const { data: transactionsData, isLoading, refetch } = useGetTransactionsQuery();
+   const updateSearchParams = useUpdateSearchParams();
+   const { searchTerm } = getSearchParams();
+    
+
+  useEffect(() => {
+    refetch();    
+  }, [searchTerm]);  
+
+  // useEffect(() => {
+  //   updateSearchParams({ page: currentPage });
+  // }, [currentPage]);
+
+  console.log("transactionsData", transactionsData);
+  
 
   // Handle search input change
-  const handleSearch = (value) => setSearchQuery(value);
+  const handleSearch = (value) => console.log(value);
 
-  // Filter data based on search query
-  const filteredData = data.filter(({ customername, ...transaction }) =>
-    Object.entries(transaction).some(([key, value]) => {
-      if (key === "date") {
-        return new Date(value).toLocaleDateString().includes(searchQuery);
-      }
-      if (key === "ammount") {
-        return value.toString().includes(searchQuery);
-      }
-      return (
-        typeof value === "string" &&
-        value.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    })
-  );
-  // Handle row selection
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (keys) => setSelectedRowKeys(keys),
-  };
 
   // Handle delete function
   const handleDelete = () => {
@@ -107,23 +115,36 @@ function Transaction() {
       title: "Date",
       dataIndex: "date",
       key: "date",
-      render: (date) => <p>{new Date(date).toLocaleDateString()}</p>,
+      render: (date) => <p>{dayjs(date).format("DD MMM YY")}</p>,
     },
     {
       title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (name) => <UserAvatar user={name} />,
+      dataIndex: "user",
+      key: "user",
+      render: (user) => 
+      <div className="flex items-center gap-2.5">
+          <img
+            src={ user?.image && user?.image.startsWith("http")
+                  ? user?.image
+                  : user?.image
+                  ? `${imageUrl}${user?.image}`
+                  : "/placeholder.png"}
+            alt={user?.full_name}
+            className="rounded-full w-8 h-8"
+          />
+          <span>{user?.full_name}</span>
+        </div>
+,
     },
     {
       title: "Bookinng ID",
-      dataIndex: "bookingID",
-      key: "bookingID",
+      dataIndex: "booking",
+      key: "booking",
     },
     {
-      title: "Ammount",
-      dataIndex: "ammount",
-      key: "ammount",
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
       // defaultSortOrder: "descend",
       sorter: (a, b) => a.ammount - b.ammount,
     },
@@ -192,29 +213,54 @@ function Transaction() {
         },
       }}
     >
-      <Head
-        onSearch={handleSearch}
-        pagename="Transactions"
-        selectedRowKeys={selectedRowKeys}
-        handleDelete={handleDelete}
-        filteredData={filteredData}
-      />
+      <div className="flex items-center justify-between md:flex-row flex-col">
+        <h1 className="text-2xl font-semibold">Transaction</h1>
+        <div className="w-full md:w-1/3 mt-3 md:mt-0 pt-0">
+          <Form form={form}>
+            <FormItem name="search">
+              <Input
+                onChange={(value) => {
+                  updateSearchParams({ searchTerm: value.target.value });
+                }}
+                defaultValue={searchTerm}
+                name="search"
+                style={{                  
+                  height: 40,
+                  borderRadius: 14,
+                  // border: "none",
+                  color: "#767676",
+                  fontSize: 15,
+                }}
+                className="font-medium"
+                prefix={<IoSearch size={16} />}
+                placeholder="Search here..."
+              />
+            </FormItem>
+          </Form>
+        </div>
+        </div>
 
-      <Table
+      {/* <Head
+        onSearch={handleSearch}
+        pagename="Transactions"        
+        handleDelete={handleDelete}
+        filteredData={transactionsData?.result}
+      /> */}
+
+      <Table         
         columns={columns}
-        rowSelection={rowSelection}
-        dataSource={filteredData}
+        dataSource={transactionsData?.result}
         pagination={{
-          defaultPageSize: 5,
+          defaultPageSize: transactionsData?.meta?.limit,
           position: ["bottomRight"],
           size: "default",
-          total: 50,
+          current: currentPage,
+          total: transactionsData?.meta?.total,
           showSizeChanger: true,
           showQuickJumper: true,
+          onChange: (page) => setCurrentPage(page),
         }}
-        showSorterTooltip={{
-          target: "sorter-icon",
-        }}
+
       />
     </ConfigProvider>
   );
@@ -224,6 +270,7 @@ export default Transaction;
 
 // Head Component (for Search Bar and Delete Button)
 function Head({ onSearch, selectedRowKeys, handleDelete, filteredData }) {
+  const updateSearchParams = useUpdateSearchParams();
   return (
     <ConfigProvider
       theme={{
@@ -254,7 +301,9 @@ function Head({ onSearch, selectedRowKeys, handleDelete, filteredData }) {
         <div className="flex gap-3 items-center">
           <Input
             placeholder="Search by Recipient, Ocation, Price, or Status"
-            onChange={(e) => onSearch(e.target.value)}
+            onChange={(e) => {
+                  updateSearchParams({ searchTerm: e.target.value });
+                }}
             prefix={<SearchOutlined />}
             // style={{ width: 200, height: 41 }}
             className="h-9 gap-2"
@@ -263,7 +312,7 @@ function Head({ onSearch, selectedRowKeys, handleDelete, filteredData }) {
 
           {/* Show delete button only if more than one row is selected */}
 
-          {selectedRowKeys.length > 1 && (
+          {/* {selectedRowKeys.length > 1 && (
             <Button
               onClick={handleDelete}
               icon={<DeleteOutlined />}
@@ -273,7 +322,7 @@ function Head({ onSearch, selectedRowKeys, handleDelete, filteredData }) {
                 ? "Delete All"
                 : "Delete Selected"}
             </Button>
-          )}
+          )} */}
           <Button
             icon={<LuDownload size={20} />}
             className="bg-[#f1f1f1] hover:bg-smart text-black border h-9"

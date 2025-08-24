@@ -1,18 +1,24 @@
 import React, { useState } from "react";
 import { DatePicker } from "antd";
 import { MdOutlineDateRange } from "react-icons/md";
+import { useUpdateSearchParams } from "../../utility/updateSearchParams";
 
 function PickDate() {
   const [isDateSelected, setIsDateSelected] = useState(false);
+  const [year, setYear] = useState(new Date().getFullYear())
 
+  const {updateSearchParams} = useUpdateSearchParams()
   const onChange = (date, dateString) => {
     console.log(date, dateString);
     setIsDateSelected(!!dateString);
   };
-
+   
+  
+  
+  
   return (
     <DatePicker
-      onChange={onChange}
+       onChange={(value) => setYear(value.get("year"))}
       picker="year"
       className="border-1 h-8 w-28 py-2 rounded-lg"
       suffixIcon={

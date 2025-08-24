@@ -7,6 +7,8 @@ import CustomerServiceChart from "./CustomerServiceChart";
 import AppDownloadStat from "./AppDownloadStat";
 import RevenueAnalysis from "./RevenueAnalysis";
 import TinyChart from "./TinyChart";
+import { useGetDashboardSummaryQuery } from "../../../redux/apiSlices/dashboardSlice";
+import { DashboardStats } from "./DashboardStats";
 dayjs.extend(customParseFormat);
 
 const stats = [
@@ -70,15 +72,59 @@ export const Card = ({ item }) => {
 };
 
 const Home = () => {
+  const {data: statsData} = useGetDashboardSummaryQuery();
+
+  console.log("statsData",statsData);
+  
   return (
     <div className="">
-      <div className="flex flex-col flex-wrap items-end gap-5 justify-between w-full bg-transparent rounded-md">
+      {/* <div className="flex flex-col flex-wrap items-end gap-5 justify-between w-full bg-transparent rounded-md">
         <div className="flex items-center justify-between flex-wrap lg:flex-nowrap gap-10 w-full">
           {stats.map((item, index) => (
             <Card key={index} item={item} />
           ))}
         </div>
+      </div> */}
+
+ <div className="flex flex-col flex-wrap items-end gap-5 justify-between w-full bg-transparent rounded-md">
+   <div className="flex items-center justify-between flex-wrap lg:flex-nowrap gap-10 w-full">
+      {/* Card 1: Total Users */}
+       <DashboardStats
+        label="Total User"
+        value={statsData?.totalUsers?.count}
+        percent={statsData?.totalUsers?.percentageChange}
+        color="#00a76f"
+        icon={[<IoTrendingUp size={20} />, <IoTrendingDown size={20} />]}
+      /> 
+
+      {/* Card 2: Total Service Providers */}
+      <DashboardStats
+        label="Total Service Provider"
+        value={statsData?.totalServiceProviders?.count}
+        percent={statsData?.totalServiceProviders?.percentageChange}
+        color="#00b8d9"
+        icon={[<IoTrendingUp size={20} />, <IoTrendingDown size={20} />]}
+      />
+
+      {/* Card 3: Total Revenue */}
+      <DashboardStats
+        label="Total Revenue"
+        value={statsData?.totalRevenue?.amount}
+        percent={statsData?.totalRevenue?.percentageChange}
+        color="#18a0fb"
+        icon={[<IoTrendingUp size={20} />, <IoTrendingDown size={20} />]}
+      />
+
+      {/* Card 4: Total Downloads */}
+      {/* <DashboardStats
+        label="Total Download"
+        value={statsData.totalDownloads.count}
+        percent={statsData.totalDownloads.percentageChange}
+        color="#ff5630"
+        icon={[<IoTrendingUp size={20} />, <IoTrendingDown size={20} />]}
+      /> */}
       </div>
+    </div>
 
       <div className="w-full h-[330px]  bg-white rounded-lg mt-4 relative flex flex-col justify-evenly">
         <CustomerServiceChart />
