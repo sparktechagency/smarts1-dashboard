@@ -281,7 +281,7 @@ const Sidebar = ({ isCollapsed }) => {
 
   return (
     <div
-      className={`bg-quilocoP h-full shadow-md transition-all duration-300  max-h-100  ${
+      className={`bg-quilocoP h-screen shadow-md transition-all duration-300  max-h-100  ${
         isCollapsed ? "w-[80px]" : "w-[280px]"
       }`}
     >

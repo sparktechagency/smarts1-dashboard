@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Table, Avatar, ConfigProvider, Input, Button, message } from "antd";
-import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Table, Avatar, ConfigProvider, Input, Button, message, Space, Tooltip } from "antd";
+import { SearchOutlined, DeleteOutlined, StopOutlined } from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import PopOver from "../../../components/common/PopOver";
 
@@ -9,6 +9,7 @@ import { LuDownload } from "react-icons/lu";
 import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
 import { getSearchParams } from "../../../utility/getSearchParams";
 import { useGetServiceProvidersQuery } from "../../../redux/apiSlices/serviceProviderSlice";
+import { GoTrash } from "react-icons/go";
 
 function ServiceProvider() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -110,14 +111,7 @@ function ServiceProvider() {
             >
               Delete Selected
             </Button>
-          )}
-          <Button
-            icon={<LuDownload size={20} />}
-            onClick={handleDeleteSelected}
-            className="bg-[#f1f1f1] hover:bg-smart text-black border h-9"
-          >
-            Export
-          </Button>
+          )}          
         </div>
       </div>
 
@@ -180,13 +174,27 @@ const columns = (handleEdit, handleBan) => [
     key: "totalEarn",
     render: (value) => `$${value}`,
   },
-  {
-    key: "action",
-    render: (text, record) => (
-      <PopOver
-        onDelete={() => handleEdit(record)}
-        onBan={() => handleBan(record)} // Pass the handleBan function
-      />
-    ),
-  },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <Space size="middle">
+          <Tooltip title="Banned">
+            <StopOutlined
+              size={20}
+              style={{ color: "blue", cursor: "pointer" }}
+              onClick={() => console.log("Banned:", record)}
+            />
+          </Tooltip>
+
+          <Tooltip title="Banned">
+            <GoTrash
+              size={20}
+              style={{ color: "red", cursor: "pointer" }}
+              onClick={() => console.log("Banned:", record)}
+            />
+          </Tooltip>
+        </Space>
+      ),
+    },
 ];

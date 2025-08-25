@@ -130,7 +130,7 @@ function Transaction() {
                   ? `${imageUrl}${user?.image}`
                   : "/placeholder.png"}
             alt={user?.full_name}
-            className="rounded-full w-8 h-8"
+            className="rounded-full w-8 h-8 shrink-0"
           />
           <span>{user?.full_name}</span>
         </div>
@@ -138,8 +138,9 @@ function Transaction() {
     },
     {
       title: "Bookinng ID",
-      dataIndex: "booking",
-      key: "booking",
+      dataIndex: "transactionId",
+      key: "transactionId",
+      render: (text)=> text.split("").slice(0, 20)
     },
     {
       title: "Amount",
@@ -176,14 +177,7 @@ function Transaction() {
           <IoEye
             style={{ fontSize: 24 }}
             className="text-black hover:text-blue-500 cursor-pointer"
-          />
-          <RiDeleteBin6Line
-            style={{ fontSize: 24 }}
-            className="text-black hover:text-red-500 cursor-pointer"
-            onClick={() =>
-              setData(data.filter((item) => item.key !== record.key))
-            }
-          />
+          />          
         </div>
       ),
     },
@@ -215,7 +209,7 @@ function Transaction() {
     >
       <div className="flex items-center justify-between md:flex-row flex-col">
         <h1 className="text-2xl font-semibold">Transaction</h1>
-        <div className="w-full md:w-1/3 mt-3 md:mt-0 pt-0">
+        <div className="w-full max-w-[250px] mt-3 md:mt-0 pt-0">
           <Form form={form}>
             <FormItem name="search">
               <Input
@@ -233,7 +227,7 @@ function Transaction() {
                 }}
                 className="font-medium"
                 prefix={<IoSearch size={16} />}
-                placeholder="Search here..."
+                placeholder="Search by transaction id..."
               />
             </FormItem>
           </Form>

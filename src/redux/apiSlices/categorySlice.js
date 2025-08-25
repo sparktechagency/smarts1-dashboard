@@ -6,15 +6,20 @@ const categorySlice = api.injectEndpoints({
         createCategory: builder.mutation({
             query: (categoryData)=> {
                 return{
-                    url: "/category/create-category",
+                    url: "/service-category",
                     method: "POST",
-                    body: categoryData,
-                    headers:{
-                        Authorization: `Bearer ${JSON.parse(localStorage.getItem("token"))}`
-                    }
+                    body: categoryData,                   
                 }
             }
         }),
+         getServiceCategory: builder.query({
+      query: () => ({
+        // url: `/coupon/admin?searchTerm=${searchTerm || ''}&page=${page}&limit=${limit}`,
+        url: `/service-category`,
+        method: "GET",
+      }),
+      transformResponse: (res) => res?.data, // optional transformation of the response
+    }),
         updateCategory: builder.mutation({
             query: ({ id, updatedData})=> {
                 return{
@@ -54,6 +59,8 @@ const categorySlice = api.injectEndpoints({
 
 export const {
     useCategoryQuery,
+    useGetServiceCategoryQuery,
+    
     useCreateCategoryMutation,
     useUpdateCategoryMutation,
     useDeleteCategoryMutation

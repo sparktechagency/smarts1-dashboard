@@ -12,8 +12,7 @@ function GetPageName() {
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
         .join(" ") // Join back with spaces
     : "";
-
-  console.log(formattedPageName);
+  
   return formattedPageName;
 }
 

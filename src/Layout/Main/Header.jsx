@@ -1,9 +1,10 @@
 import { DownOutlined } from "@ant-design/icons";
-import { Avatar, Badge, ConfigProvider, Dropdown, Flex } from "antd";
+import { Avatar, Badge, Button, ConfigProvider, Dropdown, Flex } from "antd";
 import { CgMenu } from "react-icons/cg";
 import { FaRegBell } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 import { useProfileQuery } from "../../redux/apiSlices/authSlice";
+import Cookies from "js-cookie";
 
 const Header = ({ toggleSidebar }) => {
   const {data: profileData, isLoading} = useProfileQuery()
@@ -26,8 +27,18 @@ const Header = ({ toggleSidebar }) => {
     console.log("Selected Language:", value);
   };
 
+
+    
+    const handleLogout = () => {
+      console.log("hit on l");
+      
+      Cookies.remove("accessToken")
+      Cookies.remove("refreshToken")
+      window.location.reload()        
+    };
+
   const userMenuItems = [
-    { label: <Link to="/auth/login">Log Out</Link>, key: "logout" },
+    { label: <Button style={{width: "100%"}} onClick={handleLogout} >Log Out</Button>, key: "logout" },
   ];
 
   return (

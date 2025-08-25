@@ -7,8 +7,9 @@ import {
   Popover,
   Form,
   Input,
+  Tooltip,
 } from "antd";
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { EditOutlined, PlusOutlined, SearchOutlined, StopOutlined } from "@ant-design/icons";
 import { FiEdit2 } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import GetPageName from "../../../../components/common/GetPageName";
@@ -20,12 +21,16 @@ import { HiDotsVertical } from "react-icons/hi";
 import cleaning from "../../../../assets/cleaning.png";
 import { IoEye } from "react-icons/io5";
 import { Link } from "react-router-dom";
+import { useGetServiceCategoryQuery } from "../../../../redux/apiSlices/categorySlice";
+import { imageUrl } from "../../../../redux/api/baseApi";
+import { GoTrash } from "react-icons/go";
 function CategoryList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
   const [uploadedImage, setUploadedImage] = useState(null);
-  const [editingKey, setEditingKey] = useState(null);
+  const [editingKey, setEditingKey] = useState(null);  
+
   const [tableData, setTableData] = useState([
     {
       key: "1",
@@ -79,7 +84,12 @@ function CategoryList() {
   const [filteredData, setFilteredData] = useState(tableData); // state for filtered data
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingRecord, setDeletingRecord] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const { data: serviceCategory } = useGetServiceCategoryQuery();
 
+
+  console.log("serviceCategory", serviceCategory);
+  
   const showModal = () => {
     setIsEditing(false);
     setIsModalOpen(true);
@@ -210,14 +220,19 @@ function CategoryList() {
     },
     {
       title: "Category",
-      dataIndex: "category",
-      key: "category",
+      dataIndex: "name",
+      key: "name",
     },
     {
       title: "Icon",
-      dataIndex: "icon",
-      key: "icon",
-      render: (icon) => <img width={60} src={icon} alt="slider" />,
+      dataIndex: "logo",
+      key: "logo",
+      render: (text) => <img width={60} 
+                  src={text && text.startsWith("http")
+                  ? text
+                  : text
+                  ? `${imageUrl}${text}`
+                  : "/placeholder.png"} alt="slider" />,
     },
     {
       title: "Total Service",
@@ -235,40 +250,36 @@ function CategoryList() {
       render: (_, record) => (
         <div className="flex items-center gap-2">
           <Link
-            to={`/${record.category
+            to={`/${record.name
               .toLowerCase()
               .replace(/\s+/g, "-")}-services`}
           >
             <button className="pt-2">
               <IoEye size={23} />
             </button>
-          </Link>
-          <Popover
-            content={
-              <div className="flex items-center gap-2">
-                <button
-                  className="bg-sky-400/50 hover:bg-sky-400 p-2 rounded-lg"
-                  type="link"
-                  onClick={() => handleEdit(record)}
-                >
-                  <FiEdit2 size={15} />
-                </button>
-                <button
-                  className="bg-red-400/50 hover:bg-red-400 p-2 rounded-lg"
-                  type="link"
-                  onClick={() => handleDelete(record.key, record.category)}
-                >
-                  <RiDeleteBin6Line size={15} />
-                </button>
-              </div>
-            }
-            trigger="click"
-            placement="bottom"
-          >
-            <button>
-              <HiDotsVertical size={20} />
-            </button>
-          </Popover>
+          </Link>                            
+           <Tooltip title="Edit">
+            <IoEye
+              size={20}
+              style={{ cursor: "pointer" }}
+              // onClick={() =>handleEdit(record)}
+            />
+          </Tooltip>
+          <Tooltip title="Banned">
+            <StopOutlined
+              size={20}
+              style={{ color: "blue", cursor: "pointer" }}
+              onClick={() => console.log("Banned:", record)}
+            />
+          </Tooltip>
+
+          <Tooltip title="Delete">
+            <GoTrash
+              size={20}
+              style={{ color: "red", cursor: "pointer" }}
+              // onClick={()=>handleDeleteCoupon(record?._id)}
+            />
+          </Tooltip>
         </div>
       ),
     },
@@ -320,16 +331,18 @@ function CategoryList() {
       >
         <Table
           columns={columns}
-          dataSource={filteredData}
+          dataSource={serviceCategory?.result}
           rowKey="key"
           pagination={{
-            defaultPageSize: 5,
-            position: ["bottomRight"],
-            size: "default",
-            total: 50,
-            showSizeChanger: true,
-            showQuickJumper: true,
-          }}
+          defaultPageSize: serviceCategory?.meta?.limit,
+          position: ["bottomRight"],
+          size: "default",
+          current: currentPage,
+          total: serviceCategory?.meta?.total,
+          showSizeChanger: true,
+          showQuickJumper: true,
+          onChange: (page) => setCurrentPage(page),
+        }}
         />
       </ConfigProvider>
 

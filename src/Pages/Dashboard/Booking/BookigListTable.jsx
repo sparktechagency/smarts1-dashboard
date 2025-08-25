@@ -16,6 +16,7 @@ import GetPageName from "../../../components/common/GetPageName";
 import SelectDuration from "../../../components/common/SelectDuration";
 import { useGetBookingSummaryQuery } from "../../../redux/apiSlices/bookingSlice";
 import { render } from "react-dom";
+import { FaRegEye } from "react-icons/fa6";
 
 const originData = Array.from({ length: 20 }).map((_, i) => ({
   key: i.toString(),
@@ -62,9 +63,10 @@ const BookingListTable = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const currentDate = new Date().toISOString().split("T")[0];
-  const [date, setDate] = useState("2025-08-16");
+  // const [date, setDate] = useState(currentDate);
+  const [date, setDate] = useState(currentDate);
 
-  const { data: bookingData } = useGetBookingSummaryQuery(date);
+  const { data: bookingData } = useGetBookingSummaryQuery({date, searchTerm: searchText});
 
   const isEditing = (record) => record.key === editingKey;
 
@@ -94,17 +96,13 @@ const BookingListTable = () => {
     setData(data.filter((item) => item.key !== key));
   };
 
-  const onChange = (date, dateString) => {
-    // setDate(dateString);
-    setDate(dateString); // For debugging
+  const onChange = (date, dateString) => {           
+      setDate(dateString); // For debugging
   };
 
 
-
-
-
 const columns = [
-  { title: "Booking ID", dataIndex: "acceptedBid", width: "10%" },
+  { title: "Booking ID", dataIndex: "_id", width: "10%" },
   {
     title: "Customer",
     dataIndex: "user",
@@ -137,39 +135,43 @@ const columns = [
     title: "Action",
     dataIndex: "action",
     render: (_, record) => {
-      const editable = isEditing(record);
-      return editable ? (
-        <span>
-          <Typography.Link
-            onClick={() => save(record.key)}
-            style={{ marginRight: 8 }}
-            className="text-[14px] text-blue-600"
-          >
-            Save
-          </Typography.Link>
-          <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-            <a className="text-[14px] text-blue-600">Cancel</a>
-          </Popconfirm>
-        </span>
-      ) : (
-        <div className="flex items-center gap-4 w-36">
-          <button
-            disabled={editingKey !== ""}
-            onClick={() => edit(record)}
-            className=" hover:text-sky-600"
-          >
-            <FiEdit3 size={20} />
-          </button>
-          <Popconfirm
-            title="Are you sure to delete?"
-            onConfirm={() => handleDelete(record.key)}
-          >
-            <button className=" hover:text-red-600">
-              <RiDeleteBin6Line size={20} />
-            </button>
-          </Popconfirm>
-        </div>
-      );
+      // const editable = isEditing(record);
+      // return editable ? (
+      //   <span>
+      //     <Typography.Link
+      //       onClick={() => save(record.key)}
+      //       style={{ marginRight: 8 }}
+      //       className="text-[14px] text-blue-600"
+      //     >
+      //       Save
+      //     </Typography.Link>
+      //     <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
+      //       <a className="text-[14px] text-blue-600">Cancel</a>
+      //     </Popconfirm>
+      //   </span>
+      // ) : (
+      //   <div className="flex items-center gap-4 w-36">
+      //     <button
+      //       disabled={editingKey !== ""}
+      //       onClick={() => edit(record)}
+      //       className=" hover:text-sky-600"
+      //     >
+      //       <FiEdit3 size={20} />
+      //     </button>
+      //     <Popconfirm
+      //       title="Are you sure to delete?"
+      //       onConfirm={() => handleDelete(record.key)}
+      //     >
+      //       <button className=" hover:text-red-600">
+      //         <RiDeleteBin6Line size={20} />
+      //       </button>
+      //     </Popconfirm>
+      //   </div>
+      // );
+
+     return <button className=" hover:text-blue-600">
+      <FaRegEye size={20} />
+      </button>
     },
   },
 ];
@@ -205,16 +207,15 @@ const columns = [
         <h1 className="text-[20px] font-medium">{GetPageName()}</h1>
         <div className="flex gap-4">
           <Input
-            placeholder="Search in all columns"
+            placeholder="Search by id or name"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             allowClear
-            style={{ width: 200, height: 40 }}
+            style={{ width: 300, height: 40 }}
           />
 
-          <div className="w-full flex justify-end mb-5">
-            <DatePicker onChange={onChange} />
-          </div>
+          
+            <DatePicker style={{height: 40 }} onChange={onChange} />          
         </div>
       </div>
 

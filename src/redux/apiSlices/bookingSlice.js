@@ -4,10 +4,9 @@ const bookingSlice = api.injectEndpoints({
   endpoints: (builder) => ({
     // GET: Booking Summary
     getBookingSummary: builder.query({
-      query: (date) => {
-       console.log("dadasd", date);
+      query: ({date, searchTerm}) => {       
         return {
-        url: `/dashboard/booking-summary?date=?date=${date}`,
+        url : `/dashboard/booking-summary?${date ? `date=${date}` : ''}${date && searchTerm ? `&` : ''}${searchTerm ? `searchTerm=${searchTerm}` : ''}`,
         method: "GET",
       }
       },

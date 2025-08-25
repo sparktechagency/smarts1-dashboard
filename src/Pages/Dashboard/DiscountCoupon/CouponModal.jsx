@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   ConfigProvider,
   Form,
@@ -8,234 +8,176 @@ import {
   Input,
   Radio,
   DatePicker,
-  Button,
-  Checkbox,
   message,
 } from "antd";
 import ButtonEDU from "../../../components/common/ButtonEDU";
+import {
+  useCreateCouponMutation,  
+  useUpdateCouponMutation,
+} from "../../../redux/apiSlices/couponSlice";
+import dayjs from "dayjs";
+import toast from "react-hot-toast";
+import { useGetServiceCategoryQuery } from "../../../redux/apiSlices/categorySlice";
 
-function CouponModal({ isModalOpen, setIsModalOpen, isEditing, couponData }) {
-  const [selectedService, setSelectedService] = useState("allServices");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [services] = useState([
-    "Residential cleaning",
-    "Deep cleaning",
-    "Spring cleaning",
-    "Laundry services",
-    "Dry cleaning services",
-    "Green cleaning",
-    "Sanitization and disinfection",
-    "Ceiling and wall cleaning",
-  ]);
+function CouponModal({
+  isModalOpen,
+  setIsModalOpen,
+  isEditing,
+  couponData,
+  refetch,
+}) {
+  const [form] = Form.useForm();
+  const { data: serviceCategory } = useGetServiceCategoryQuery();
+  const [createCoupon, { isLoading }] = useCreateCouponMutation();
+  const [updateCoupon] = useUpdateCouponMutation();
 
-  const [offerName, setOfferName] = useState("");
-  const [discountType, setDiscountType] = useState("fixedAmount");
-  const [discountValue, setDiscountValue] = useState("");
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [selectedServices, setSelectedServices] = useState([]);
-
-  // Populate the form with existing coupon data when editing
+  // populate when editing
   useEffect(() => {
-    if (isEditing && couponData) {
-      setOfferName(couponData.offerName);
-      setDiscountType(couponData.discountType);
-      setDiscountValue(couponData.discountValue);
-      setStartDate(couponData.startDate);
-      setEndDate(couponData.endDate);
-      setSelectedService(couponData.selectedService);
-      setSelectedServices(couponData.selectedServices || []);
-    }
-  }, [isEditing, couponData]);
 
-  const handleChangeSelect = (value) => {
-    setDiscountType(value);
-  };
-
-  const onChangeStartDate = (date, dateString) => {
-    setStartDate(date);
-  };
-
-  const onChangeEndDate = (date, dateString) => {
-    setEndDate(date);
-  };
-
-  const handleRadioChange = (e) => {
-    setSelectedService(e.target.value);
-    if (e.target.value === "allServices") {
-      setSelectedServices(services);
+    if (couponData) {
+      form.setFieldsValue({
+        code: couponData.code,
+        name: couponData.name,
+        discountType: couponData.discountType,
+        discountValue: couponData.discountValue,
+        serviceCategory: couponData.serviceCategory?._id,
+        startDate: dayjs(couponData.startDate),
+        endDate: dayjs(couponData.endDate),
+      });
     } else {
-      setSelectedServices([]);
+      form.resetFields();
     }
+  }, [isEditing, couponData, form]);
+
+  const handleSave = async (values) => {
+  if (
+    !values.name ||
+    !values.code ||
+    !values.discountType ||
+    !values.discountValue ||
+    !values.serviceCategory
+  ) {
+    message.error("Please fill in all required fields.");
+    return;
+  }
+
+  const payload = {
+    ...values,
+    startDate: values.startDate.format("YYYY-MM-DD"),
+    endDate: values.endDate.format("YYYY-MM-DD"),
   };
 
-  const handleServiceSelection = (checkedValues) => {
-    setSelectedServices(checkedValues);
-  };
+  try {
+    let res;
+    if (couponData) {
+      res = await updateCoupon(payload);
+    } else {
+      res = await createCoupon(payload);
+    }
 
-  const filteredServices = services.filter((service) =>
-    service.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleSave = () => {
-    if (
-      !offerName ||
-      !discountType ||
-      !discountValue ||
-      !startDate ||
-      !endDate ||
-      (selectedService === "customServices" && selectedServices.length === 0)
-    ) {
-      message.error("Please fill in all required fields.");
+    // Check for errors in RTK Query response
+    if (res?.error) {
+      toast.error(res.error?.data?.message || "Something went wrong");
+      console.log("coupon save error", res.error);
       return;
     }
 
-    const couponData = {
-      offerName,
-      discountType,
-      discountValue,
-      selectedService,
-      selectedServices,
-      startDate,
-      endDate,
-    };
-
-    console.table(couponData);
-
-    if (isEditing) {
-      // Handle editing logic here (e.g., update coupon data)
-      console.log("Updating coupon data...");
-    } else {
-      // Handle adding new coupon here
-      console.log("Adding new coupon...");
-    }
-
-    setOfferName("");
-    setDiscountType("");
-    setDiscountValue("");
-    setSelectedService("allServices");
-    setSelectedServices([]);
-    setStartDate(null);
-    setEndDate(null);
-    setSearchQuery("");
-
+    console.log("courpons", res);
+    
+    // Success
+    refetch();
     setIsModalOpen(false);
-  };
+    form.resetFields();
+  } catch (error) {
+    // This catch will rarely run unless there’s a JS error, not an API error
+    console.log("unexpected error", error);
+    toast.error("Unexpected error occurred");
+  }
+};
 
   return (
-    <ConfigProvider
-      theme={{
-        components: {
-          Button: {},
-        },
-      }}
-    >
+    <ConfigProvider>
       <Modal
         centered
         width={700}
-        title={isEditing ? "Edit Coupon Code" : "Add Coupon Code"}
-        visible={isModalOpen}
+        title={couponData ? "Edit Coupon Code" : "Add Coupon Code"}
+        open={isModalOpen}
         footer={null}
         onCancel={() => setIsModalOpen(false)}
       >
-        <Form layout="vertical" className="flex flex-col" onFinish={handleSave}>
-          <Form.Item label="Offer Name" className="mb-2" required>
-            <Input
-              placeholder="Enter Offer Name"
-              className="h-9"
-              value={offerName}
-              onChange={(e) => setOfferName(e.target.value)}
-            />
+        <Form layout="vertical" form={form} onFinish={handleSave}>
+          <Form.Item
+            label="Coupon Name"
+            name="name"
+            rules={[{ required: true }]}
+          >
+            <Input placeholder="Enter Coupon Name" className="h-9" />
           </Form.Item>
-          <Form.Item label="Discount Type" className="mb-2" required>
+
+          <Form.Item
+            label="Coupon Code"
+            name="code"
+            rules={[{ required: true }]}
+          >
+            <Input placeholder="Enter Coupon Code" className="h-9" />
+          </Form.Item>
+
+          <Form.Item
+            label="Discount Type"
+            name="discountType"
+            rules={[{ required: true }]}
+          >
             <Select
               className="w-full h-9"
-              placeholder="Choose a discount type"
-              defaultValue="fixedAmount"
-              value={discountType}
-              onChange={handleChangeSelect}
               options={[
-                {
-                  value: "fixedAmount",
-                  label: "Fixed Amount",
-                },
-                {
-                  value: "percentage",
-                  label: "Percentage",
-                },
+                { value: "Flat", label: "Flat" },
+                { value: "Percentage", label: "Percentage" },
               ]}
             />
           </Form.Item>
+
           <Form.Item
-            label={
-              discountType === "fixedAmount"
-                ? "Fixed Value"
-                : "Percentage Value"
-            }
-            className="mb-2"
-            required
+            label="Discount Value"
+            name="discountValue"
+            rules={[{ required: true }]}
           >
             <InputNumber
               type="number"
               controls={false}
-              placeholder={
-                discountType === "fixedAmount"
-                  ? "Fixed Value"
-                  : "Percentage Value"
-              }
               className="w-full h-9 flex items-center"
-              value={discountValue}
-              onChange={setDiscountValue}
             />
           </Form.Item>
-          <Form.Item label="Applicable Services" className="mb-2" required>
-            <Radio.Group
-              name="radiogroup"
-              value={selectedService}
-              onChange={handleRadioChange}
-              options={[
-                {
-                  value: "allServices",
-                  label: "All Services",
-                },
-                {
-                  value: "customServices",
-                  label: "Custom Services",
-                },
-              ]}
-            />
+
+          <Form.Item
+            label="Select Service"
+            name="serviceCategory"
+            rules={[{ required: true }]}
+          >
+            <Radio.Group>
+              {serviceCategory?.result?.map((service) => (
+                <Radio key={service._id} value={service._id}>
+                  {service.name}
+                </Radio>
+              ))}
+            </Radio.Group>
           </Form.Item>
-          {selectedService === "customServices" && (
-            <Form.Item label="Select Services" className="mb-2">
-              <Input
-                placeholder="Search Services"
-                className="h-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <div className="flex flex-col h-24 overflow-y-auto mt-1 border rounded pl-2">
-                <Checkbox.Group
-                  options={filteredServices}
-                  value={selectedServices}
-                  onChange={handleServiceSelection}
-                />
-              </div>
-            </Form.Item>
-          )}
+
           <div className="w-full flex gap-4 mb-4">
-            <Form.Item label="Start Date" className="w-full mb-2" required>
-              <DatePicker
-                value={startDate}
-                onChange={onChangeStartDate}
-                className="w-full h-9"
-              />
+            <Form.Item
+              label="Start Date"
+              name="startDate"
+              className="w-full"
+              rules={[{ required: true }]}
+            >
+              <DatePicker className="w-full h-9" />
             </Form.Item>
-            <Form.Item label="End Date" className="w-full mb-2" required>
-              <DatePicker
-                value={endDate}
-                onChange={onChangeEndDate}
-                className="w-full h-9"
-              />
+            <Form.Item
+              label="End Date"
+              name="endDate"
+              className="w-full"
+              rules={[{ required: true }]}
+            >
+              <DatePicker className="w-full h-9" />
             </Form.Item>
           </div>
 
@@ -247,7 +189,11 @@ function CouponModal({ isModalOpen, setIsModalOpen, isEditing, couponData }) {
               >
                 Cancel
               </ButtonEDU>
-              <ButtonEDU actionType="save" htmlType="submit">
+              <ButtonEDU
+                actionType="save"
+                htmlType="submit"
+                loading={isLoading}
+              >
                 Save
               </ButtonEDU>
             </div>

@@ -1,9 +1,13 @@
-import React, { useState } from "react";
-import { Table, ConfigProvider, Button, DatePicker } from "antd";
+import React, { useEffect, useState } from "react";
+import { Table, ConfigProvider, Button, DatePicker, Select } from "antd";
 import { FaSortAmountDown } from "react-icons/fa";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { IoEye } from "react-icons/io5";
 import DetailsModal from "./DetailsModal"; // Import the modal component
+import { useGetReportedQuery } from "../../../redux/apiSlices/reportedSlice";
+import dayjs from "dayjs";
+import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
+import { getSearchParams } from "../../../utility/getSearchParams";
 
 function Report() {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -12,10 +16,22 @@ function Report() {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isSortedAsc, setIsSortedAsc] = useState(true); // Track sorting order
 
+  const { data: transactionData, refetch } = useGetReportedQuery();
+  const updateSearchParams = useUpdateSearchParams()
+  const {status} = getSearchParams()
+
+  useEffect(()=>{
+    refetch()
+  },[status])
+
+  console.log("transactionData", transactionData);
+
   const rowSelection = {
     selectedRowKeys,
     onChange: setSelectedRowKeys,
   };
+
+
 
   const handleDeleteSelected = () => {
     setUserData(userData.filter((user) => !selectedRowKeys.includes(user.key)));
@@ -64,16 +80,18 @@ function Report() {
       <div className="flex justify-between items-center py-5">
         <h1 className="text-[20px] font-medium">Report Issues</h1>
         <div className="flex gap-3">
-          <Button
-            icon={<FaSortAmountDown />}
-            onClick={handleSortByDate} // Sort on click
-            className="bg-white text-black border-none h-9"
-          >
-            Sort by Date
-          </Button>
+          <Select
+            placeholder="Status"
+            allowClear
+            style={{ width: 120, height: 42 }}
+            onChange={(value=>updateSearchParams({ status: value }))}
+            options={[
+              { value: "Resolved", label: "Resolved" },
+              { value: "Under Review", label: "Under Review" },
+            ]}
+          />
 
-          <DatePicker picker="month" className="h-9" />
-          {selectedRowKeys.length > 0 && (
+          {/* {selectedRowKeys.length > 0 && (
             <Button
               icon={<RiDeleteBin6Line />}
               onClick={handleDeleteSelected}
@@ -81,16 +99,16 @@ function Report() {
             >
               Delete Selected
             </Button>
-          )}
+          )} */}
         </div>
       </div>
 
       <Table
         rowSelection={rowSelection}
         columns={columns(handleViewDetails)}
-        dataSource={userData}
+        dataSource={transactionData?.result}
         pagination={{
-          defaultPageSize: 5,
+          size: transactionData?.meta?.limit,
           position: ["bottomRight"],
           size: "default",
           total: 50,
@@ -115,8 +133,8 @@ export default Report;
 const columns = (handleViewDetails) => [
   {
     title: "Report ID",
-    dataIndex: "reportID",
-    key: "reportID",
+    dataIndex: "_id",
+    key: "_id",
   },
   {
     title: "Service Provider",
@@ -129,13 +147,18 @@ const columns = (handleViewDetails) => [
     key: "reportedBy",
   },
   {
+    title: "Reported Type",
+    dataIndex: "report_type",
+    key: "report_type",
+  },
+  {
     title: "Status",
     dataIndex: "status",
     key: "status",
     render: (_, record) => (
       <span
         className={`font-medium text-${
-          record.status === "Resolve" ? "green-500" : "red-500"
+          record.status === "Resolved" ? "green-500" : "red-500"
         }`}
       >
         {record.status}
@@ -144,9 +167,9 @@ const columns = (handleViewDetails) => [
   },
   {
     title: "Date",
-    dataIndex: "date",
-    key: "date",
-    render: (text) => new Date(text).toLocaleDateString(), // Format Date
+    dataIndex: "createdAt",
+    key: "createdAt",
+    render: (text) => dayjs(text).format("DD MMMM YY"), // Format Date
   },
   {
     key: "action",
