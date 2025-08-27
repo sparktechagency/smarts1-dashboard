@@ -2,9 +2,11 @@ import React from "react";
 import { Form, Input, Card, Flex, ConfigProvider, message } from "antd";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import ButtonEDU from "../../../components/common/ButtonEDU";
+import { useChangePasswordMutation } from "../../../redux/apiSlices/authSlice";
 
 function AdminPassword() {
   const [form] = Form.useForm(); // Form instance
+  const [changePassword] = useChangePasswordMutation()
 
   // Handle cancel: Reset form fields
   const handleCancel = () => {
@@ -22,8 +24,11 @@ function AdminPassword() {
         confirmPassword: values.confirmPassword.trim(),
       };
 
-      console.log("Password Updated:", trimmedValues);
 
+      console.log("Password Updated:", trimmedValues);
+      const res = await changePassword(trimmedValues)
+      console.log("password changes", res);
+      
       // Replace this with an API call to update the password
       message.success("Password updated successfully!");
 

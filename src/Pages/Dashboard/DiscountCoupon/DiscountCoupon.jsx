@@ -13,11 +13,12 @@ import CouponModal from "./CouponModal";
 import GetPageName from "../../../components/common/GetPageName";
 
 import { HiDotsVertical } from "react-icons/hi";
-import { useDeleteCouponMutation, useGetCouponsQuery } from "../../../redux/apiSlices/couponSlice";
+import { useDeleteCouponMutation, useGetCouponsQuery, useUpdateCouponMutation } from "../../../redux/apiSlices/couponSlice";
 import { GoTrash } from "react-icons/go";
 import dayjs from "dayjs";
 import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
 import { getSearchParams } from "../../../utility/getSearchParams";
+import toast from "react-hot-toast";
 
 function DiscountCoupon() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,6 +30,7 @@ function DiscountCoupon() {
   const [currentPage, setCurrentPage] = useState(1)
   
   const { data: couponsData, isLoading, isError, refetch } = useGetCouponsQuery();
+  const [updateCoupon] = useUpdateCouponMutation();
   const [deleteCoupon] = useDeleteCouponMutation()
     const {searchTerm} = getSearchParams();
 
@@ -61,9 +63,7 @@ function DiscountCoupon() {
     onChange: setSelectedRowKeys,
   };
 
-  const handleEdit = (record) => {
-    console.log("sadfsa", record);
-    
+  const handleEdit = (record) => {      
     setSelectedRecord(record); // Store selected record for editing
     setIsEdit(true); // Set edit mode flag to true
     setIsModalOpen(true); // Open modal
@@ -91,6 +91,21 @@ function DiscountCoupon() {
         console.log("error", error);
         
     }
+  }
+
+    const handleCouponStatusToggle = async(record)=>{
+    try {          
+     
+     
+      const res = await updateCoupon({code: record?.code, isActive: record?.isActive ? false : true});  
+     console.log("coupon status", res);
+     toast.success("Coupon status change")
+      refetch();      
+  } catch (error) {
+    // This catch will rarely run unless there’s a JS error, not an API error
+    console.log("unexpected error", error);
+    toast.error("Unexpected error occurred");
+  }
   }
 
   return (
@@ -147,7 +162,7 @@ function DiscountCoupon() {
 
       <Table
         rowSelection={rowSelection}
-        columns={columns(handleEdit, handleDeleteCoupon)} // Pass handleEdit to columns
+        columns={columns(handleEdit, handleDeleteCoupon, handleCouponStatusToggle)} // Pass handleEdit to columns
         dataSource={couponsData?.result}
         pagination={{
           defaultPageSize: couponsData?.meta?.limit,
@@ -175,7 +190,7 @@ function DiscountCoupon() {
 
 export default DiscountCoupon;
 
-const columns = (handleEdit, handleDeleteCoupon) => [
+const columns = (handleEdit, handleDeleteCoupon, handleCouponStatusToggle) => [
   {
     title: "Coupon Code",
     dataIndex: "code",
@@ -236,7 +251,7 @@ const columns = (handleEdit, handleDeleteCoupon) => [
             <StopOutlined
               size={20}
               style={{ color: "blue", cursor: "pointer" }}
-              onClick={() => console.log("Banned:", record)}
+              onClick={() => handleCouponStatusToggle(record)}
             />
           </Tooltip>
 

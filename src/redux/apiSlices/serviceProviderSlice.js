@@ -11,19 +11,20 @@ const serviceProvidersSlice = api.injectEndpoints({
       transformResponse: (res) => res?.data, // optional
     }),
 
-    // GET: Fetch Banned Service Providers (optional if you want a specific list)
-    getBannedServiceProviders: builder.query({
-      query: () => ({
-        url: "/dashboard/service-providers/banned", // Adjust this if there's a specific endpoint for banned providers
-        method: "GET",
+    // GET: Fetch Banned Customers
+    bannedProviders: builder.mutation({
+      query: ({id, status}) => ({
+        url: `users/admin/toggle-block/${id}?tobeStatus=${status}`,
+        // url: `users/admin/toggle-block/${id}}`,
+        method: "PATCH",
       }),
       transformResponse: (res) => res?.data, // optional
     }),
-
     // DELETE: Delete Service Provider by ID
     deleteServiceProvider: builder.mutation({
       query: (id) => ({
-        url: `/dashboard/service-providers/${id}`,
+        // url: `/dashboard/service-providers/${id}`,
+        url: `/users/admin/delete/${id}`,
         method: "DELETE",
       }),
     }),
@@ -32,6 +33,7 @@ const serviceProvidersSlice = api.injectEndpoints({
 
 export const {
   useGetServiceProvidersQuery,
-  useGetBannedServiceProvidersQuery,
+  useBannedProvidersMutation,
+
   useDeleteServiceProviderMutation,
 } = serviceProvidersSlice;

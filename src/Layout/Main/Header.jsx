@@ -8,27 +8,7 @@ import Cookies from "js-cookie";
 
 const Header = ({ toggleSidebar }) => {
   const {data: profileData, isLoading} = useProfileQuery()
-
-
-
-  console.log("profileData", profileData);
-  
-  // if(isLoading){
-  //   return <p>Loading...</p>
-  // }
-  
-  // const src = user?.image?.startsWith("https")
-  //   ? user?.image
-  //   : `https://your-image-source/${user?.image}`;
-  // const [selectedCountry, setSelectedCountry] = useState("USA");
-
-  const handleCountryChange = (value) => {
-    setSelectedCountry(value);
-    console.log("Selected Language:", value);
-  };
-
-
-    
+      
     const handleLogout = () => {
       console.log("hit on l");
       

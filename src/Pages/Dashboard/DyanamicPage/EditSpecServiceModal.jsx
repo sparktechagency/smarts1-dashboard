@@ -2,6 +2,7 @@ import React from "react";
 import { Modal, Form, Input, Upload, ConfigProvider, message } from "antd";
 import { CloseCircleOutlined, CloudUploadOutlined } from "@ant-design/icons";
 import ButtonEDU from "../../../components/common/ButtonEDU";
+import { imageUrl } from "../../../redux/api/baseApi";
 
 function EditSpecServiceModal({
   isEditing,
@@ -15,13 +16,9 @@ function EditSpecServiceModal({
   handleImageUpload,
 }) {
   const handleFormSubmitWithValidation = async (values) => {
-    // Validate fields
-    if (!uploadedImage && !isEditing) {
-      message.error("Please upload an image!");
-      return;
-    }
 
-    if (!values.serviceName || !values.price) {
+
+    if (!values.name || !values.serviceCharge) {
       message.error("Please fill in all required fields!");
       return;
     }
@@ -54,7 +51,7 @@ function EditSpecServiceModal({
         >
           <Form.Item
             label="Service Name"
-            name="serviceName"
+            name="name"
             rules={[{ required: true, message: "Please enter Service Name!" }]}
           >
             <Input placeholder="Enter Service name" className="h-12" />
@@ -62,7 +59,7 @@ function EditSpecServiceModal({
 
           <Form.Item
             label="Price"
-            name="price"
+            name="serviceCharge"
             rules={[{ required: true, message: "Please enter Price!" }]}
           >
             <Input placeholder="Enter price" className="h-12" />
@@ -71,7 +68,10 @@ function EditSpecServiceModal({
           <Form.Item label="Upload Image">
             {uploadedImage ? (
               <div className="relative">
-                <img src={uploadedImage} alt="Uploaded" width={100} />
+                {/* <img src={`${imageUrl}${uploadedImage}`} alt="Uploaded" width={100} /> */}
+                <img 
+                src={uploadedImage && uploadedImage.startsWith('data:image') ? uploadedImage : `${imageUrl}${uploadedImage}`}
+                 alt="Uploaded" width={100} />
                 <CloseCircleOutlined
                   className="absolute top-0 right-0 text-red-500 cursor-pointer"
                   onClick={() => setUploadedImage(null)}

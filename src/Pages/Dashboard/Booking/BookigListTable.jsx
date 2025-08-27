@@ -17,6 +17,8 @@ import SelectDuration from "../../../components/common/SelectDuration";
 import { useGetBookingSummaryQuery } from "../../../redux/apiSlices/bookingSlice";
 import { render } from "react-dom";
 import { FaRegEye } from "react-icons/fa6";
+import BookingModal from "./BookingModal";
+import dayjs from "dayjs";
 
 const originData = Array.from({ length: 20 }).map((_, i) => ({
   key: i.toString(),
@@ -59,47 +61,19 @@ const BookingListTable = () => {
   const [form] = Form.useForm();
   const [data, setData] = useState(originData);
   const [searchText, setSearchText] = useState("");
-  const [editingKey, setEditingKey] = useState("");
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [selectItem, setSelectItem] = useState(null);
+  const [open, setOpen] = useState(false);
 
   const currentDate = new Date().toISOString().split("T")[0];
-  // const [date, setDate] = useState(currentDate);
+  const [currentPage, setCurrentPage] = useState(1);
   const [date, setDate] = useState(currentDate);
 
-  const { data: bookingData } = useGetBookingSummaryQuery({date, searchTerm: searchText});
-
-  const isEditing = (record) => record.key === editingKey;
-
-  const edit = (record) => {
-    form.setFieldsValue({ ...record });
-    setEditingKey(record.key);
-  };
+  const { data: bookingData } = useGetBookingSummaryQuery({date, currentPage, searchTerm: searchText});
 
   const cancel = () => setEditingKey("");
-
-  const save = async (key) => {
-    try {
-      const row = await form.validateFields();
-      const newData = [...data];
-      const index = newData.findIndex((item) => item.key === key);
-      if (index > -1) {
-        newData[index] = { ...newData[index], ...row };
-        setData(newData);
-      }
-      setEditingKey("");
-    } catch (errInfo) {
-      console.log("Validate Failed:", errInfo);
-    }
-  };
-
-  const handleDelete = (key) => {
-    setData(data.filter((item) => item.key !== key));
-  };
-
   const onChange = (date, dateString) => {           
       setDate(dateString); // For debugging
   };
-
 
 const columns = [
   { title: "Booking ID", dataIndex: "_id", width: "10%" },
@@ -119,14 +93,15 @@ const columns = [
   },
   { title: "Status", dataIndex: "status", width: "10%", editable: true,
     render: (status) => (
-    <span className={`capitalize ${status === "cancelled" ? "text-red-600" : status === "inProgress" ? "text-blue-500" : "text-green-600"}`}>
+    <span className={`capitalize ${status === "cancelled" ? "text-red-600" : status === "in Progress" ? "text-blue-500" : "text-green-600"}`}>
       {status}
     </span>
   ),
    },
   {
     title: "Scheduled Time",
-    dataIndex: "scheduledTime",
+    dataIndex: "bookingDate",
+    render: text=> dayjs(text).format("DD MMMM, YYYY"),
     width: "20%",
     editable: true,
   },
@@ -169,15 +144,13 @@ const columns = [
       //   </div>
       // );
 
-     return <button className=" hover:text-blue-600">
+     return <button onClick={()=>{setOpen(true); setSelectItem(record)}} className=" hover:text-blue-600">
       <FaRegEye size={20} />
       </button>
     },
   },
 ];
 
-  console.log("bookingData", bookingData);
-  
   return (
     <ConfigProvider
       theme={{
@@ -207,7 +180,7 @@ const columns = [
         <h1 className="text-[20px] font-medium">{GetPageName()}</h1>
         <div className="flex gap-4">
           <Input
-            placeholder="Search by id or name"
+            placeholder="Search by customer or provider name"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             allowClear
@@ -219,24 +192,7 @@ const columns = [
         </div>
       </div>
 
-      <Form form={form} component={false}>
-        {/* <Table
-          rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
-          components={{ body: { cell: EditableCell } }}
-          bordered
-          dataSource={filteredData}
-          columns={mergedColumns}
-          rowClassName="editable-row"
-          pagination={{
-            onChange: cancel,
-            defaultPageSize: 5,
-            position: ["bottomRight"],
-            size: "default",
-            total: 50,
-            showSizeChanger: true,
-            showQuickJumper: true,
-          }}
-        /> */}
+      <Form form={form} component={false}>       
 
          <Table
       // rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
@@ -250,12 +206,15 @@ const columns = [
         defaultPageSize: bookingData?.meta?.limit,
         position: ["bottomRight"],
         size: "default",
+        current: currentPage,
         total: bookingData?.meta?.total,
+        onChange:(page)=>setCurrentPage(page),
         showSizeChanger: true,
         showQuickJumper: true,
       }}
     />
       </Form>
+      <BookingModal open={open} setOpen={setOpen} data={selectItem} />
     </ConfigProvider>
   );
 };

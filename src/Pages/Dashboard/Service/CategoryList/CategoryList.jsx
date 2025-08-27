@@ -8,6 +8,8 @@ import {
   Form,
   Input,
   Tooltip,
+  Image,
+  Modal,
 } from "antd";
 import { EditOutlined, PlusOutlined, SearchOutlined, StopOutlined } from "@ant-design/icons";
 import { FiEdit2 } from "react-icons/fi";
@@ -21,9 +23,11 @@ import { HiDotsVertical } from "react-icons/hi";
 import cleaning from "../../../../assets/cleaning.png";
 import { IoEye } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import { useGetServiceCategoryQuery } from "../../../../redux/apiSlices/categorySlice";
+import { useCreateCategoryMutation, useDeleteCategoryMutation, useGetServiceCategoryQuery, useUpdateCategoryMutation } from "../../../../redux/apiSlices/categorySlice";
 import { imageUrl } from "../../../../redux/api/baseApi";
 import { GoTrash } from "react-icons/go";
+import CategoryDetailsModal from "./CategoryDetailsModal";
+import toast from "react-hot-toast";
 function CategoryList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -85,10 +89,14 @@ function CategoryList() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingRecord, setDeletingRecord] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const { data: serviceCategory } = useGetServiceCategoryQuery();
-
-
-  console.log("serviceCategory", serviceCategory);
+  
+  const { data: serviceCategory, refetch } = useGetServiceCategoryQuery();
+  const [deleteCategory] = useDeleteCategoryMutation()
+  const [openDetailModal, setOpenDetailModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("")
+  const [uploadFile, setUploadFile] = useState(null);
+  const [createCategory] = useCreateCategoryMutation()
+  const [updateCategory] = useUpdateCategoryMutation()
   
   const showModal = () => {
     setIsEditing(false);
@@ -102,7 +110,15 @@ function CategoryList() {
     setEditingKey(null);
   };
 
-  const handleFormSubmit = (values) => {
+  const handleFormSubmit = async (values) => {
+    
+    console.log("values", values)
+    const formData = new FormData();
+
+    if (uploadFile && typeof uploadFile !== "string") {
+        formData.append("logo", uploadFile);
+      }        
+        formData.append("data", JSON.stringify({name: values?.name}))
     if (!uploadedImage && !isEditing) {
       message.error("Please upload an image!");
       return;
@@ -110,65 +126,39 @@ function CategoryList() {
 
     if (isEditing) {
       // Update existing row
-      const updatedData = tableData.map((item) =>
-        item.key === editingKey
-          ? {
-              ...item,
-              category: values.category,
-              icon: uploadedImage || item.icon, // Retain old image if no new one is uploaded
-              totalService: values.totalService,
-              priceRange: values.priceRange,
-            }
-          : item
-      );
-      setTableData(updatedData);
-      setFilteredData(updatedData); // Update filtered data too
+      const res = await updateCategory(formData);
+              
+        toast.success(res?.data?.message);
+        refetch()
       message.success("Slider updated successfully!");
     } else {
       // Add new row
-      setTableData([
-        ...tableData,
-        {
-          key: (tableData.length + 1).toString(),
-          category: values.category,
-          serial: tableData.length + 1,
-          icon: uploadedImage, // Ensure uploaded image is set
-          totalService: values.totalService,
-          priceRange: values.priceRange,
-        },
-      ]);
-      setFilteredData([
-        ...filteredData,
-        {
-          key: (tableData.length + 1).toString(),
-          category: values.category,
-          serial: tableData.length + 1,
-          icon: uploadedImage,
-          totalService: values.totalService,
-          priceRange: values.priceRange,
-        },
-      ]);
-      message.success("Slider added successfully!");
+      const res = await createCategory(formData); 
+        console.log("addd", res);
+        refetch()
+        toast.success(res?.data?.message)
+        handleCancel()      
     }
 
     handleCancel();
   };
 
   const handleImageUpload = (info) => {
-    const file = info.file.originFileObj;
-    if (!file) return;
-
-    const isImage = file.type.startsWith("image/");
-    if (!isImage) {
-      message.error("You can only upload image files!");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setUploadedImage(reader.result);
-    };
-    reader.readAsDataURL(file);
+     const file = info.file.originFileObj; // Extract the file from info
+        if (!file) return;
+        
+        const isImage = file.type.startsWith("image/");
+        if (!isImage) {
+          message.error("You can only upload image files!");
+          return;
+        }    
+        setUploadFile(file);
+        
+        const reader = new FileReader();
+        reader.onload = () => {
+          setUploadedImage(reader.result);
+        };
+        reader.readAsDataURL(file);
   };
 
   const handleEdit = (record) => {
@@ -183,17 +173,20 @@ function CategoryList() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (key, category) => {
-    setDeletingRecord({ key, category });
+  const handleDelete = (record) => {
+    setDeletingRecord(record);
     setIsDeleteModalOpen(true);
   };
 
-  const onConfirmDelete = () => {
-    const newData = tableData.filter((item) => item.key !== deletingRecord.key);
-    setTableData(newData);
-    setFilteredData(newData); // Update filtered data after delete
-    message.success("Slider deleted successfully!");
-    setIsDeleteModalOpen(false);
+  const onConfirmDelete = async() => {
+    try {
+      const res = await deleteCategory(deletingRecord?._id);
+      refetch();
+      message.success(res?.data?.message);
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      console.log("delete error", error);
+    }
   };
 
   const onCancelDelete = () => {
@@ -227,7 +220,7 @@ function CategoryList() {
       title: "Icon",
       dataIndex: "logo",
       key: "logo",
-      render: (text) => <img width={60} 
+      render: (text) => <Image width={40} height={40}
                   src={text && text.startsWith("http")
                   ? text
                   : text
@@ -236,33 +229,25 @@ function CategoryList() {
     },
     {
       title: "Total Service",
-      dataIndex: "totalService",
-      key: "totalService",
+      dataIndex: "serviceCount",
+      key: "serviceCount",
     },
     {
       title: "Price Range",
       dataIndex: "priceRange",
       key: "priceRange",
+      render: priceRange=> <span>{priceRange?.lowest} - {priceRange?.highest}</span>
     },
     {
       title: "Actions",
       key: "actions",
       render: (_, record) => (
-        <div className="flex items-center gap-2">
-          <Link
-            to={`/${record.name
-              .toLowerCase()
-              .replace(/\s+/g, "-")}-services`}
-          >
-            <button className="pt-2">
-              <IoEye size={23} />
-            </button>
-          </Link>                            
+        <div className="flex items-center gap-2">                            
            <Tooltip title="Edit">
             <IoEye
               size={20}
               style={{ cursor: "pointer" }}
-              // onClick={() =>handleEdit(record)}
+              onClick={() =>{setOpenDetailModal(true); setSelectedCategory(record?._id)}}
             />
           </Tooltip>
           <Tooltip title="Banned">
@@ -277,7 +262,7 @@ function CategoryList() {
             <GoTrash
               size={20}
               style={{ color: "red", cursor: "pointer" }}
-              // onClick={()=>handleDeleteCoupon(record?._id)}
+              onClick={()=>handleDelete(record)}
             />
           </Tooltip>
         </div>
@@ -351,6 +336,7 @@ function CategoryList() {
         handleCancel={handleCancel}
         handleFormSubmit={handleFormSubmit}
         form={form}
+        setUploadedImage={setUploadedImage}
         uploadedImage={uploadedImage}
         handleImageUpload={handleImageUpload}
         isEditing={isEditing}
@@ -360,7 +346,8 @@ function CategoryList() {
         deletingRecord={deletingRecord}
         onConfirmDelete={onConfirmDelete}
         onCancelDelete={onCancelDelete}
-      />
+      />      
+      <CategoryDetailsModal open={openDetailModal} setOpenDetailModal={setOpenDetailModal} category={selectedCategory} />      
     </div>
   );
 }

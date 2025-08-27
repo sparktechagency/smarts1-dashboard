@@ -8,6 +8,9 @@ function DeleteSpecServiceModal({
   onCancelDelete,
   onConfirmDelete,
 }) {
+
+  console.log("deletingRecord", deletingRecord);
+  
   return (
     <Modal
       title="Delete Confirmation"

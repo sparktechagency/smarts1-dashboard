@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FaPlus } from "react-icons/fa6";
 import {
   Flex,
@@ -10,41 +10,20 @@ import {
   Form,
   ConfigProvider,
   message,
+  Select,
 } from "antd";
 import { MoreOutlined, DeleteFilled, EditFilled } from "@ant-design/icons";
 
 import ButtonEDU from "../../../components/common/ButtonEDU";
 import { MdMoreVert } from "react-icons/md";
+import { useCreateAdminMutation, useGetAllAdminQuery } from "../../../redux/apiSlices/settingSlice";
+import toast from "react-hot-toast";
+
 
 const AdminList = () => {
-  // Initial data
-  const initialData = [
-    {
-      key: 1,
-      name: "Tom Hardy",
-      email: "tom.hardy@gmail.com",
-      role: "Admin",
-      creationdate: "13 Feb 2020",
-    },
-    {
-      key: 2,
-      name: "Emma Stone",
-      email: "emma.stone@example.com",
-      role: "Admin",
-      creationdate: "10 Jan 2021",
-    },
-    {
-      key: 3,
-      name: "Robert Downey",
-      email: "rdj@avengers.com",
-      role: "Admin",
-      creationdate: "25 Dec 2019",
-    },
-  ];
-
   const [searchText, setSearchText] = useState("");
-  const [admins, setAdmins] = useState(initialData);
-  const [filteredData, setFilteredData] = useState(initialData);
+  const [admins, setAdmins] = useState(null);
+  const [filteredData, setFilteredData] = useState(null);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -54,7 +33,22 @@ const AdminList = () => {
 
   const addFormRef = useRef(null);
   const editFormRef = useRef(null);
+  
+  const {data: adminListData} = useGetAllAdminQuery();
+  const [createAdmin] = useCreateAdminMutation()
 
+
+  useEffect(()=>{
+    const mergedAdmins = [
+      ...(adminListData?.SUPER_ADMIN?.data || []),
+      ...(adminListData?.ADMIN?.data || [])
+    ];
+
+    setAdmins(mergedAdmins);      
+    setFilteredData(mergedAdmins);      
+  },[adminListData])  
+
+ 
   // Search functionality
   const handleSearch = (e) => {
     const value = e.target.value.toLowerCase();
@@ -62,8 +56,9 @@ const AdminList = () => {
 
     const filtered = admins.filter(
       (item) =>
-        item.name.toLowerCase().includes(value) ||
-        item.email.toLowerCase().includes(value)
+        item?.name?.toLowerCase().includes(value) ||
+        item?.email?.toLowerCase().includes(value) ||
+        item?.role?.toLowerCase().includes(value)
     );
 
     setFilteredData(filtered);
@@ -81,24 +76,24 @@ const AdminList = () => {
     message.info("Admin addition cancelled.");
   };
 
-  const handleAddAdmin = (values) => {
-    // Ensure characters after ".com" are removed
-    const cleanEmail = values.email.replace(/\.com.*/i, ".com");
+  const handleAddAdmin = async (values) => {
+    console.log("add admin", values);
+    try {
+      const res = await createAdmin(values);
 
-    const newAdmin = {
-      key: admins.length + 1,
-      ...values,
-      email: cleanEmail, // Apply cleaned email
-      creationdate: new Date().toLocaleDateString(),
-    };
-
-    const updatedAdmins = [...admins, newAdmin];
-    setAdmins(updatedAdmins);
-    setFilteredData(updatedAdmins);
+      console.log("admin add ", res);      
+      if(res?.error){
+        toast.error(res?.error?.data?.error[0].message)
+      }
+      message.success("Admin added successfully!");
+    } catch (error) {
+        console.log("createAdmin error", error);        
+    }
+    
     setIsAddModalOpen(false);
     addFormRef.current?.resetFields();
 
-    message.success("Admin added successfully!");
+    
   };
 
   // Open Edit Admin Modal
@@ -118,16 +113,7 @@ const AdminList = () => {
   };
 
   const handleEditAdmin = (values) => {
-    // Ensure characters after ".com" are removed
-    const cleanEmail = values.email.replace(/\.com.*/i, ".com");
-
-    const updatedAdmins = admins.map((admin) =>
-      admin.key === selectedAdmin.key
-        ? { ...admin, ...values, email: cleanEmail }
-        : admin
-    );
-    setAdmins(updatedAdmins);
-    setFilteredData(updatedAdmins);
+ 
     setIsEditModalOpen(false);
 
     message.success("Admin updated successfully!");
@@ -142,11 +128,8 @@ const AdminList = () => {
   // Confirm Delete Admin
   const handleConfirmDelete = () => {
     if (!selectedAdmin) return;
-    const updatedAdmins = admins.filter(
-      (admin) => admin.key !== selectedAdmin.key
-    );
-    setAdmins(updatedAdmins);
-    setFilteredData(updatedAdmins);
+
+
     setIsDeleteModalOpen(false);
 
     message.success("Admin deleted successfully!");
@@ -192,7 +175,7 @@ const AdminList = () => {
           <Form layout="vertical" ref={addFormRef} onFinish={handleAddAdmin}>
             <Form.Item
               label="Name"
-              name="name"
+              name="full_name"
               rules={[{ required: true, message: "Please enter Name" }]}
             >
               <Input placeholder="Name" className="h-10" />
@@ -223,14 +206,6 @@ const AdminList = () => {
               ]}
             >
               <Input placeholder="Email" className="h-10" />
-            </Form.Item>
-            <Form.Item
-              label="Role"
-              name="role"
-              value="Admin"
-              rules={[{ required: false, message: "Please enter Role" }]}
-            >
-              <Input placeholder="Role" className="h-10" disabled />
             </Form.Item>
             <Form.Item label="Password" name="password">
               <Input.Password placeholder="Set a Password" className="h-10" />
@@ -267,14 +242,7 @@ const AdminList = () => {
             },
           }}
         >
-          <Form layout="vertical" ref={editFormRef} onFinish={handleEditAdmin}>
-            <Form.Item
-              label="Name"
-              name="name"
-              rules={[{ required: true, message: "Please enter Name" }]}
-            >
-              <Input placeholder="Name" className="h-10" />
-            </Form.Item>
+          <Form layout="vertical" ref={editFormRef} onFinish={handleEditAdmin}>            
             <Form.Item
               label="Email"
               name="email"
@@ -394,7 +362,7 @@ const DeleteAdmin = ({ name, onConfirm, onCancel }) => (
 );
 
 const columns = (onEdit, onDelete) => [
-  { title: "Name", dataIndex: "name", key: "name" },
+  // { title: "Name", dataIndex: "name", key: "name" },
   { title: "Email", dataIndex: "email", key: "email" },
   { title: "Role", dataIndex: "role", key: "role" },
   {

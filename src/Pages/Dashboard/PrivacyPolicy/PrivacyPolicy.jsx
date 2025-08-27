@@ -1,94 +1,107 @@
-import React, { useRef, useState, useMemo } from "react";
+import { Button, Spin } from "antd";
 import JoditEditor from "jodit-react";
+import { useEffect, useRef, useState } from "react";
 
-function PrivacyPolicy() {
+import {
+  useAddDesclaimerMutation,
+  useGetPrivecyPolicyQuery,
+} from "../../../redux/apiSlices/cmsSlice";
+import toast from "react-hot-toast";
+
+const PrivacyPolicy = () => {
   const editor = useRef(null);
-  const [content, setContent] = useState(
-    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusantium totam voluptates blanditiis dicta facilis..."
-  );
+  const [content, setContent] = useState("");
 
-  const config = useMemo(
-    () => ({
-      theme: "default",
-      showCharsCounter: false,
-      showWordsCounter: false,
-      toolbarAdaptive: true,
-      toolbarSticky: false,
-      enableDragAndDropFileToEditor: false,
-      allowResizeX: false,
-      allowResizeY: false,
-      statusbar: false,
-      buttons: [
-        "source",
-        "|",
-        "bold",
-        "italic",
-        "underline",
-        "|",
-        "ul",
-        "ol",
-        "|",
-        "font",
-        "fontsize",
-        "brush",
-        "paragraph",
-        "|",
-        "image",
-        "table",
-        "link",
-        "|",
-        "left",
-        "center",
-        "right",
-        "justify",
-        "|",
-        "undo",
-        "redo",
-        "|",
-        "hr",
-        "eraser",
-        "fullsize",
-      ],
-      useSearch: false,
-      spellcheck: false,
-      iframe: false,
-      askBeforePasteHTML: false,
-      askBeforePasteFromWord: false,
-      toolbarButtonSize: "small",
-      readonly: false,
-      observer: { timeout: 100 },
-    }),
-    []
-  );
+  // Fetch privacy policy
+  const {
+    data: policyData,
+    isLoading: isFetching,
+    isError,
+    refetch,
+  } = useGetPrivecyPolicyQuery(undefined);
 
-  const handleSave = () => {
-    console.log("Saved Content:", content);
+  // Mutation
+  const [addDisclaimer, { isLoading: isSubmitting }] =
+    useAddDesclaimerMutation();
+
+  // Prefill editor with API data
+  useEffect(() => {
+    if (policyData?.data) {
+      setContent(policyData.data); // ✅ API returns HTML in "data"
+    }
+  }, [policyData]);
+
+  const config = {
+    readonly: false,
+    placeholder: "Start typing...",
+    style: {
+      height: "60vh",
+      background: "white",
+    },
+  };
+
+  const handleSubmit = async () => {
+    // Strip HTML and check plain text
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = content;
+    const plainText = tempDiv.innerText.trim();
+
+    if (!plainText) {
+      toast.error("Content cannot be empty");
+      return;
+    }
+
+    try {
+      await addDisclaimer({
+        privacyPolicy: content, // ✅ send HTML
+      }).unwrap();
+
+      toast.success("Saved successfully");
+      refetch();
+    } catch (err) {
+      console.error("Error saving:", err);
+      toast.error("Failed to save content");
+    }
   };
 
   return (
-    <>
-      <div className="w-full ">
-        <h1 className="text-[20px] font-medium py-5">Privacy Policy</h1>
-        <div className="w-5/5 bg-black">
+    <div className="px-4">
+      <h3 className="text-xl font-semibold text-gray-800 mb-6">
+        Privacy Policy
+      </h3>
+
+      {isFetching ? (
+        <div className="flex justify-center py-10">
+          <Spin size="large" />
+        </div>
+      ) : isError ? (
+        <p className="text-red-500">Failed to load Privacy Policy</p>
+      ) : (
+        <>
           <JoditEditor
-            className="my-5 bg-red-300"
             ref={editor}
             value={content}
-            onChange={(newContent) => setContent(newContent)}
             config={config}
+            tabIndex={1}
+            onBlur={newContent => setContent(newContent)} 
+            // onChange={(newContent) => setContent(newContent)} // ✅ use onChange
           />
-        </div>
-        <div className="flex items-center justify-end">
-          <button
-            className="bg-smart text-[16px] text-white px-10 py-2.5 mt-5 rounded-md"
-            onClick={handleSave}
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
 
-export default React.memo(PrivacyPolicy);
+          <div className="flex items-center justify-end mt-6">
+            <Button
+              size="large"
+              type="primary"
+              onClick={handleSubmit}
+              className="px-6 py-2"
+              loading={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save & Update"}
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default PrivacyPolicy;

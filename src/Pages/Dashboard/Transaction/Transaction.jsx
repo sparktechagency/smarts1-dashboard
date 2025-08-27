@@ -91,12 +91,9 @@ function Transaction() {
     refetch();    
   }, [searchTerm]);  
 
-  // useEffect(() => {
-  //   updateSearchParams({ page: currentPage });
-  // }, [currentPage]);
-
-  console.log("transactionsData", transactionsData);
-  
+  useEffect(() => {
+    updateSearchParams({ page: currentPage });
+  }, [currentPage]);
 
   // Handle search input change
   const handleSearch = (value) => console.log(value);
@@ -245,13 +242,12 @@ function Transaction() {
         columns={columns}
         dataSource={transactionsData?.result}
         pagination={{
-          defaultPageSize: transactionsData?.meta?.limit,
-          position: ["bottomRight"],
-          size: "default",
+          size: transactionsData?.meta?.limit,
+          position: ["bottomRight"],          
           current: currentPage,
           total: transactionsData?.meta?.total,
-          showSizeChanger: true,
-          showQuickJumper: true,
+          // showSizeChanger: true,
+          // showQuickJumper: true,
           onChange: (page) => setCurrentPage(page),
         }}
 

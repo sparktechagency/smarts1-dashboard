@@ -62,7 +62,7 @@ function BookingList() {
           icon={[<IoTrendingUp size={20} />, <IoTrendingDown size={20} />]}
         />
       </div>
-      <BookigListTable />
+      <BookigListTable />      
     </div>
   );
 }

@@ -1,21 +1,18 @@
 import React from "react";
 import { Modal } from "antd";
-import ButtonEDU from "../../../../components/common/ButtonEDU";
+import ButtonEDU from "./ButtonEDU";
 
-function DeleteCategoryModal({
-  title,
+
+function DeleteConfirmationModal({
   isDeleteModalOpen,
   deletingRecord,
   onCancelDelete,
   onConfirmDelete,
 }) {
-
-  console.log("name", name);
-  
   return (
     <Modal
       title="Delete Confirmation"
-      open={isDeleteModalOpen}
+      visible={isDeleteModalOpen}
       onCancel={onCancelDelete}
       footer={null}
       centered
@@ -23,7 +20,7 @@ function DeleteCategoryModal({
       <div className="flex flex-col justify-between gap-5">
         <div className="flex justify-center">
           Are you sure you want to delete{" "}
-          <span className="font-bold ml-1">{title ?? deletingRecord?.name}</span>?
+          <span className="font-bold ml-1">{deletingRecord?.name}</span>?
         </div>
         <div className="flex justify-center gap-4">
           <ButtonEDU actionType="cancel" onClick={onCancelDelete}>
@@ -38,4 +35,4 @@ function DeleteCategoryModal({
   );
 }
 
-export default DeleteCategoryModal;
+export default DeleteConfirmationModal;

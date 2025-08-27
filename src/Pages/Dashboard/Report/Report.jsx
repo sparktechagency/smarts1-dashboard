@@ -15,16 +15,21 @@ function Report() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isSortedAsc, setIsSortedAsc] = useState(true); // Track sorting order
+  const [currentPage, setCurrentPage] = useState(1)
 
   const { data: transactionData, refetch } = useGetReportedQuery();
   const updateSearchParams = useUpdateSearchParams()
-  const {status} = getSearchParams()
+  const {status, page} = getSearchParams()
 
   useEffect(()=>{
     refetch()
   },[status])
 
-  console.log("transactionData", transactionData);
+  useEffect(()=>{
+    updateSearchParams({page: currentPage})
+  },[currentPage])
+
+  console.log("transactionData", currentPage);
 
   const rowSelection = {
     selectedRowKeys,
@@ -64,6 +69,7 @@ function Report() {
             headerSplitColor: "none",
             headerBorderRadius: "none",
             cellFontSize: "16px",
+            cellPaddingBlock: 15,
           },
           Pagination: {
             borderRadius: "3px",
@@ -108,12 +114,11 @@ function Report() {
         columns={columns(handleViewDetails)}
         dataSource={transactionData?.result}
         pagination={{
-          size: transactionData?.meta?.limit,
+          size: transactionData?.meta?.total,
+          total:  transactionData?.meta?.limit,          
           position: ["bottomRight"],
-          size: "default",
-          total: 50,
-          showSizeChanger: true,
-          showQuickJumper: true,
+          current: currentPage,
+          onChange: (page)=> setCurrentPage(page),          
         }}
       />
 
@@ -138,13 +143,15 @@ const columns = (handleViewDetails) => [
   },
   {
     title: "Service Provider",
-    dataIndex: "serviceProvider",
-    key: "serviceProvider",
+    dataIndex: "refferenceId",
+    key: "refferenceId",
+    render: provider=> provider?.serviceProvider?.full_name
   },
   {
     title: "Reported By",
-    dataIndex: "reportedBy",
-    key: "reportedBy",
+    dataIndex: "createdBy",
+    key: "createdBy",
+    render: reporter=> reporter?.full_name
   },
   {
     title: "Reported Type",
@@ -179,11 +186,7 @@ const columns = (handleViewDetails) => [
           size={25}
           className="hover:text-sky-500 cursor-pointer"
           onClick={() => handleViewDetails(record)}
-        />
-        <RiDeleteBin6Line
-          size={25}
-          className="hover:text-red-500 cursor-pointer"
-        />
+        />      
       </div>
     ),
   },

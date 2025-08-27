@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import man from "../../../assets/man.png";
 import { FaFeather } from "react-icons/fa6";
 import { Button, ConfigProvider, Form, Input, Upload, message } from "antd";
@@ -7,17 +7,28 @@ import { HiMiniPencil } from "react-icons/hi2";
 import { imageUrl } from "../../../redux/api/baseApi";
 
 import { useUser } from "../../../provider/User";
+import { useGetProfileQuery, useUpdateAdminProfileMutation } from "../../../redux/apiSlices/settingSlice";
 
 function Profile() {
   const [showButton, setShowButton] = useState(false);
   const [uploadedImage, setUploadedImage] = useState(null);
-  const user = useUser() || {
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phoneNumber: "+1234567890",
-    role: "Admin",
-    image: null,
-  };
+
+  const { data: profileData, refetch } = useGetProfileQuery();
+  const [user, setUser] = useState(null);
+  
+
+  useEffect(() => {
+    if (profileData) {      
+      
+      setUser({
+        name: profileData?.data?.full_name || "",
+        email: profileData?.data?.email || "",
+        phone: profileData?.data?.phone || "",
+        role: profileData?.data?.role || "",
+        image: profileData?.data?.image || "",
+      });
+    }
+  }, [profileData]);
 
   return (
     <ConfigProvider
@@ -33,7 +44,7 @@ function Profile() {
         },
       }}
     >
-      <div className="bg-quilocoP w-[50%] min-h-72 flex flex-col justify-start items-center px-4 border bg-white rounded-lg">
+      <div className="bg-quilocoP w-4/5 min-h-72 flex flex-col justify-start items-center px-4 border bg-white rounded-lg">
         <div className="relative mt-6 flex flex-col items-center justify-center">
           <img
             src={
@@ -68,7 +79,7 @@ function Profile() {
               </button>
             </Upload>
           )}
-          <h3 className="text-slate-50 text-xl mt-3">{user.name}</h3>
+          <h3 className="text-black text-xl mt-3">{user?.name}</h3>
         </div>
         <div className="w-full flex justify-end">
           <Button
@@ -102,36 +113,44 @@ export default Profile;
 const ProfileDetails = ({ showButton, setShowButton, user, uploadedImage }) => {
   const [form] = Form.useForm();
   const { updateUser } = useUser();
+const [updateAdminProfile] = useUpdateAdminProfileMutation()
+  
+  // ✅ use RTK mutation
+  
 
-  React.useEffect(() => {
-    form.setFieldsValue({
-      name: user.name || "John Doe",
-      email: user.email || "johndoe@example.com",
-      phone: user.phoneNumber || "+1234567890",
-      role: user.role || "Admin",
-    });
+  useEffect(() => {
+    if (user) {
+      form.setFieldsValue({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        role: user.role || "",
+      });
+    }
   }, [user, form]);
 
   const handleFinish = async (values) => {
-    try {
+    try {           
       const formData = new FormData();
+
       if (uploadedImage) {
         formData.append("image", uploadedImage);
       }
 
       const data = {
         name: values.name,
-        phoneNumber: values.phone,
+        phone: values.phone,
       };
 
       formData.append("data", JSON.stringify(data));
 
-      const response = await updateProfile(formData).unwrap();
+      const response = await updateAdminProfile(formData).unwrap();
       if (response.success) {
         message.success("Profile updated successfully!");
         setShowButton(false);
+        refetch();
         if (updateUser && response.data) {
-          updateUser(response.data);
+          updateUser(response.data); // ✅ update global context
         }
       }
     } catch (error) {
@@ -149,9 +168,6 @@ const ProfileDetails = ({ showButton, setShowButton, user, uploadedImage }) => {
             defaultActiveBg: "#49b0f1",
             defaultHoverBg: "#49b0f1",
             defaultHoverColor: "#ffffff",
-          },
-          Form: {
-            labelColor: "#efefef",
           },
           Input: {
             colorText: "black",
@@ -177,7 +193,6 @@ const ProfileDetails = ({ showButton, setShowButton, user, uploadedImage }) => {
             <Input
               className="bg-white border border-black h-12 rounded-lg"
               readOnly={!showButton}
-              style={{ color: "black" }}
             />
           </Form.Item>
           <Form.Item
@@ -188,7 +203,6 @@ const ProfileDetails = ({ showButton, setShowButton, user, uploadedImage }) => {
             <Input
               className="bg-white border border-black h-12 rounded-lg"
               readOnly
-              style={{ color: "black" }}
             />
           </Form.Item>
         </div>
@@ -202,7 +216,6 @@ const ProfileDetails = ({ showButton, setShowButton, user, uploadedImage }) => {
             <Input
               className="bg-white border border-black h-12 rounded-lg"
               readOnly={!showButton}
-              style={{ color: "black" }}
             />
           </Form.Item>
           <Form.Item
@@ -213,7 +226,6 @@ const ProfileDetails = ({ showButton, setShowButton, user, uploadedImage }) => {
             <Input
               className="bg-white border border-black h-12 rounded-lg"
               readOnly
-              style={{ color: "black" }}
             />
           </Form.Item>
         </div>
@@ -222,10 +234,10 @@ const ProfileDetails = ({ showButton, setShowButton, user, uploadedImage }) => {
           <Form.Item>
             <Button
               block
-              htmlType="submit"
+              htmlType="submit"              
               className="bg-smart/80 border-none text-white min-w-20 min-h-10 text-xs rounded-lg"
             >
-              Save Changes
+             Save Changes
             </Button>
           </Form.Item>
         )}

@@ -1,14 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { Table, Avatar, ConfigProvider, Input, Button, message, Space, Tooltip } from "antd";
-import { SearchOutlined, DeleteOutlined, EyeOutlined, StopOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Avatar,
+  ConfigProvider,
+  Input,
+  Button,
+  message,
+  Space,
+  Tooltip,
+} from "antd";
+import {
+  SearchOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import PopOver from "../../../components/common/PopOver";
 import CustomerEditModal from "./CustomerEditModal";
 import { LuDownload } from "react-icons/lu";
-import { useGetCustomersQuery } from "../../../redux/apiSlices/customersSlice";
+import { useBannedCustomersMutation,  useDeleteCustomerMutation, useGetCustomersQuery } from "../../../redux/apiSlices/customersSlice";
 import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
 import { getSearchParams } from "../../../utility/getSearchParams";
 import { GoTrash } from "react-icons/go";
+import DeleteCategoryModal from "../Service/CategoryList/DeleteCategoryModal";
+import toast from "react-hot-toast";
 
 function Customer() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,17 +34,23 @@ function Customer() {
   const [selectedProvider, setSelectedProvider] = useState(null);
 
   const { data: customersData, isLoading, refetch } = useGetCustomersQuery();
-  const  updateSearchParams  = useUpdateSearchParams();
-  const {  searchTerm,  page } = getSearchParams();
-  const [currentPage, setCurrentPage] = useState(1)
+  const [deleteCustomer] = useDeleteCustomerMutation();
+  const [bannedCostomers] = useBannedCustomersMutation()
 
-  useEffect(() => {    
+  const updateSearchParams = useUpdateSearchParams();
+  const { searchTerm, page } = getSearchParams();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingRecord, setDeletingRecord] = useState(null);
+
+  useEffect(() => {
     refetch();
-  }, [ searchTerm,  page]);
+  }, [searchTerm, page]);
 
-  useEffect(() => {  
-  updateSearchParams({ page:  currentPage});
-}, [currentPage]);
+  useEffect(() => {
+    updateSearchParams({ page: currentPage });
+  }, [currentPage]);
 
   const rowSelection = {
     selectedRowKeys,
@@ -65,11 +87,40 @@ function Customer() {
     setIsModalOpen(false);
   };
 
-  const handleDeleteSelected = () => {
-    setUserData(userData.filter((user) => !selectedRowKeys.includes(user.key)));
-    setSelectedRowKeys([]);
+
+  const onConfirmDelete = async () => {
+    try {
+      const res = await deleteCustomer(deletingRecord?._id);
+      console.log("delete customer", res);
+      
+      refetch();
+      toast.success(res?.data?.message);
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      toast.error(error?.error?.data?.message)
+      console.log("delete error 111", error?.error?.data);
+    }
   };
 
+  const onCancelDelete = () => {
+    message.info("Delete action canceled.");
+    setIsDeleteModalOpen(false);
+  };
+
+
+  // handle Banned Customer
+const handleBannedCustomer = async (id, status) =>{
+  try {    
+    const res = await bannedCostomers({id, status});
+    console.log("banned res", res);
+    toast.success("Banned costomer successfully")
+    refetch()
+  } catch (error) {
+    console.log("banned customer error", error);
+    
+  }
+}
+  
   return (
     <ConfigProvider
       theme={{
@@ -98,9 +149,9 @@ function Customer() {
         <div className="flex gap-3">
           <Input
             placeholder="Search by Name, Email or Phone"
-             onChange={(value) => {
-                  updateSearchParams({ searchTerm: value.target.value });
-                }}
+            onChange={(value) => {
+              updateSearchParams({ searchTerm: value.target.value });
+            }}
             // onChange={(e) => console.log(e.target.value)}
             prefix={<SearchOutlined />}
             className="h-9 gap-2"
@@ -120,7 +171,7 @@ function Customer() {
 
       <Table
         rowSelection={rowSelection}
-        columns={columns(handleEdit, handleBan)} // Pass handleEdit and handleBan to columns
+        columns={columns(handleEdit, handleBan, setDeletingRecord, setIsDeleteModalOpen, handleBannedCustomer)} // Pass handleEdit and handleBan to columns
         dataSource={customersData?.result}
         pagination={{
           defaultPageSize: customersData?.meta?.limit,
@@ -130,7 +181,7 @@ function Customer() {
           total: customersData?.meta?.total,
           showSizeChanger: true,
           showQuickJumper: true,
-          onChange: (page) => setCurrentPage(page),  
+          onChange: (page) => setCurrentPage(page),
         }}
       />
       {/* Edit Modal */}
@@ -140,13 +191,21 @@ function Customer() {
         providerData={selectedProvider}
         onSave={handleSave}
       />
+
+      <DeleteCategoryModal
+      name={deletingRecord?.full_name}
+        isDeleteModalOpen={isDeleteModalOpen}
+        deletingRecord={deletingRecord}
+        onConfirmDelete={onConfirmDelete}
+        onCancelDelete={onCancelDelete}
+      />
     </ConfigProvider>
   );
 }
 
 export default Customer;
 
-const columns = (handleEdit, handleBan) => [
+const columns = (handleEdit, handleBan, setDeletingRecord, setIsDeleteModalOpen, handleBannedCustomer) => [
   {
     title: "Customer Name",
     dataIndex: "full_name",
@@ -183,28 +242,33 @@ const columns = (handleEdit, handleBan) => [
     key: "totalAmount",
   },
   {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Space size="middle">
-          <Tooltip title="Banned">
-            <StopOutlined
-              size={20}
-              style={{ color: "blue", cursor: "pointer" }}
-              onClick={() => console.log("Banned:", record)}
-            />
-          </Tooltip>
+    title: "Status",
+    dataIndex: "status",
+    key: "status",
+  },
+  {
+    title: "Action",
+    key: "action",
+    render: (_, record) => (
+      <Space size="middle">
+        <Tooltip title="Banned">
+          <StopOutlined
+            size={20}
+            style={{ color: "blue", cursor: "pointer" }}
+            onClick={() => handleBannedCustomer(record?._id, "blocked")}
+          />
+        </Tooltip>
 
-          <Tooltip title="Banned">
-            <GoTrash
-              size={20}
-              style={{ color: "red", cursor: "pointer" }}
-              onClick={() => console.log("Banned:", record)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
+        <Tooltip title="Delete">
+          <GoTrash
+            size={20}
+            style={{ color: "red", cursor: "pointer" }}
+            onClick={() => {setIsDeleteModalOpen(true); setDeletingRecord(record)}}
+          />
+        </Tooltip>
+      </Space>
+    ),
+  },
 ];
 
 const data = [

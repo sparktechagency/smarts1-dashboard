@@ -33,8 +33,8 @@ function EditCategoryModal({
       >
         <Form form={form} layout="vertical" onFinish={handleFormSubmit}>
           <Form.Item
-            label="Category"
-            name="category"
+            label="Category Name"
+            name="name"
             rules={[{ required: true, message: "Please enter Category!" }]}
           >
             <Input placeholder="Enter slider name" className="h-12" />

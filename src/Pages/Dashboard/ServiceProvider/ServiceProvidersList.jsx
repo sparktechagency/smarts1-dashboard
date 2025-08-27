@@ -1,6 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Table, Avatar, ConfigProvider, Input, Button, message, Space, Tooltip } from "antd";
-import { SearchOutlined, DeleteOutlined, StopOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Avatar,
+  ConfigProvider,
+  Input,
+  Button,
+  message,
+  Space,
+  Tooltip,
+} from "antd";
+import {
+  SearchOutlined,
+  DeleteOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 import GetPageName from "../../../components/common/GetPageName";
 import PopOver from "../../../components/common/PopOver";
 
@@ -8,8 +21,14 @@ import { LuDownload } from "react-icons/lu";
 
 import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
 import { getSearchParams } from "../../../utility/getSearchParams";
-import { useGetServiceProvidersQuery } from "../../../redux/apiSlices/serviceProviderSlice";
+import {
+  useBannedProvidersMutation,
+  useDeleteServiceProviderMutation,
+  useGetServiceProvidersQuery,
+} from "../../../redux/apiSlices/serviceProviderSlice";
 import { GoTrash } from "react-icons/go";
+import DeleteCategoryModal from "../Service/CategoryList/DeleteCategoryModal";
+import toast from "react-hot-toast";
 
 function ServiceProvider() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,10 +37,24 @@ function ServiceProvider() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
 
-  const { data: serviceProvidersData, isLoading, refetch } = useGetServiceProvidersQuery(); // Replace with service provider API query
+  const {
+    data: serviceProvidersData,
+    isLoading,
+    refetch,
+  } = useGetServiceProvidersQuery();
+  const [deleteServiceProvider] = useDeleteServiceProviderMutation();
+  const [bannedProviders]= useBannedProvidersMutation()
+
   const updateSearchParams = useUpdateSearchParams();
   const { searchTerm, page } = getSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deletingRecord, setDeletingRecord] = useState(null);
+
+
+  console.log("isDeleteModalOpen", isDeleteModalOpen);
+
 
   useEffect(() => {
     refetch();
@@ -41,19 +74,6 @@ function ServiceProvider() {
     setIsModalOpen(true); // Open modal
   };
 
-  const handleBan = (provider) => {
-    setUserData((prevData) =>
-      prevData.map((user) =>
-        user.key === provider.key ? { ...user, banned: !user.banned } : user
-      )
-    );
-    message.success(
-      `${provider.full_name} has been ${
-        provider.banned ? "unbanned" : "banned"
-      }`
-    );
-  };
-
   const handleSave = (updatedProvider) => {
     setUserData((prevData) =>
       prevData.map((user) =>
@@ -67,6 +87,40 @@ function ServiceProvider() {
     setUserData(userData.filter((user) => !selectedRowKeys.includes(user.key)));
     setSelectedRowKeys([]);
   };
+
+  const onConfirmDelete = async () => {
+    try {
+      const res = await deleteServiceProvider(deletingRecord?._id);
+      console.log("delete customer", res);
+
+      refetch();
+      toast.success(res?.data?.message);
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      toast.error(error?.error?.data?.message);
+      console.log("delete error 111", error?.error?.data);
+    }
+  };
+
+  const onCancelDelete = () => {
+    message.info("Delete action canceled.");
+    setIsDeleteModalOpen(false);
+  };
+
+  // handle Banned Customer
+  const handleBannedProvider = async (id, status) => {
+    try {
+      const res = await bannedProviders({ id, status });
+      console.log("banned res", res);
+      toast.success("Banned provider successfully")
+      refetch();
+    } catch (error) {
+      console.log("banned customer error", error);
+    }
+  };
+
+  
+  
 
   return (
     <ConfigProvider
@@ -111,13 +165,19 @@ function ServiceProvider() {
             >
               Delete Selected
             </Button>
-          )}          
+          )}
         </div>
       </div>
 
       <Table
         rowSelection={rowSelection}
-        columns={columns(handleEdit, handleBan)} // Pass handleEdit and handleBan to columns
+        rowKey="_id"
+        columns={columns(
+          setDeletingRecord,
+         setIsDeleteModalOpen,
+         handleBannedProvider
+         
+        )} // Pass handleEdit and handleBan to columns
         dataSource={serviceProvidersData?.result}
         pagination={{
           defaultPageSize: serviceProvidersData?.meta?.limit,
@@ -129,14 +189,26 @@ function ServiceProvider() {
           showQuickJumper: true,
           onChange: (page) => setCurrentPage(page),
         }}
-      />      
+      />
+
+      <DeleteCategoryModal
+        title={deletingRecord?.full_name}
+        isDeleteModalOpen={isDeleteModalOpen}
+        deletingRecord={deletingRecord}
+        onConfirmDelete={onConfirmDelete}
+        onCancelDelete={onCancelDelete}
+      />
     </ConfigProvider>
   );
 }
 
 export default ServiceProvider;
 
-const columns = (handleEdit, handleBan) => [
+const columns = (
+  setDeletingRecord,
+  setIsDeleteModalOpen,
+  handleBannedProvider
+) => [
   {
     title: "Provider Name",
     dataIndex: "full_name",
@@ -174,27 +246,41 @@ const columns = (handleEdit, handleBan) => [
     key: "totalEarn",
     render: (value) => `$${value}`,
   },
-    {
-      title: "Action",
-      key: "action",
-      render: (_, record) => (
-        <Space size="middle">
-          <Tooltip title="Banned">
-            <StopOutlined
-              size={20}
-              style={{ color: "blue", cursor: "pointer" }}
-              onClick={() => console.log("Banned:", record)}
-            />
-          </Tooltip>
+  {
+    title: "Action",
+    key: "action",
+    render: (_, record) => (
+      <Space size="middle">
+        <Tooltip title="Banned">
+          <StopOutlined
+            size={20}
+            style={{ color: "blue", cursor: "pointer" }}
+            onClick={() => handleBannedProvider(record?._id, "blocked")}
+          />
+        </Tooltip>
 
-          <Tooltip title="Banned">
-            <GoTrash
-              size={20}
-              style={{ color: "red", cursor: "pointer" }}
-              onClick={() => console.log("Banned:", record)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
+        {/* <Tooltip title="Delete">
+          <GoTrash
+            size={20}
+            style={{ color: "red", cursor: "pointer" }}
+            onClick={() => {
+              setIsDeleteModalOpen(true);
+              setDeletingRecord(record);
+            }}
+          />
+        </Tooltip> */}
+
+        <Tooltip title="Delete">
+          <GoTrash
+            size={20}
+            style={{ color: "red", cursor: "pointer" }}
+            onClick={() => {              
+              setDeletingRecord(record);
+              setIsDeleteModalOpen(true)
+            }}
+          />
+        </Tooltip>        
+      </Space>
+    ),
+  },
 ];

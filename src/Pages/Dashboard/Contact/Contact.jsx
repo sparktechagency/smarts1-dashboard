@@ -1,20 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, Button, Flex } from "antd";
-import { LiaPhoneVolumeSolid } from "react-icons/lia";
+import { LiaMailchimp, LiaPhoneVolumeSolid } from "react-icons/lia";
 import { PiMapPinAreaLight } from "react-icons/pi";
+import { IoMailOutline } from "react-icons/io5";
 import { CiMail } from "react-icons/ci";
 import ButtonEDU from "../../../components/common/ButtonEDU";
+import {
+  useGetContactQuery,
+  useUpdateContactMutation,
+} from "../../../redux/apiSlices/cmsSlice";
+import toast from "react-hot-toast";
 
 const Contact = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [updateContect] = useUpdateContactMutation();
+  const { data: contactData } = useGetContactQuery();
+  
   const [contactInfo, setContactInfo] = useState({
-    phone: "(+62) 8896-2220 | (021) 111 444 90",
-    email: "demo@gmail.com",
-    location: "Jl. Merdeka Raya No.73B, Kuta, Badung, Bali",
+    phone: "",
+    email: "",
+    address: "",
   });
-
+  
   const [editedContact, setEditedContact] = useState({ ...contactInfo });
-
   const showModal = () => {
     setEditedContact({ ...contactInfo }); // Reset edits to original contact info
     setIsModalOpen(true);
@@ -24,76 +32,76 @@ const Contact = () => {
     setIsModalOpen(false);
   };
 
-  const handleUpdate = () => {
-    // Trim everything after the domain part (e.g., ".com", ".org")
-    const trimmedEmail = editedContact.email.replace(
-      /(\.com|\.org|\.net|\.edu)(.*)$/,
-      "$1"
-    );
+  useEffect(() => {
+    setContactInfo({
+      phone: contactData?.data?.phone,
+      email: contactData?.data?.email,
+      address: contactData?.data?.address,
+    });    
+  }, [contactData]);
+  
 
-    // Update the contact info with the trimmed email
-    setContactInfo({ ...editedContact, email: trimmedEmail }); // Update the main contact info
-    setIsModalOpen(false);
+  const handleUpdate = async () => {
+    try {
+      const data = { contactInfo: editedContact };
+      const res = await updateContect(data);
+      console.log("updateContect", res);
+      toast.success("Contact Update Successfully");
+      setIsModalOpen(false);
+    } catch (error) {
+      console.log("contact error", error);
+    }
+    // setIsModalOpen(false);
   };
 
   const handleChange = (key, value) => {
     setEditedContact((prev) => ({ ...prev, [key]: value }));
   };
 
-  const validateEmail = (email) => {
-    // Basic email validation regex
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return regex.test(email);
-  };
-
   const contactFields = [
     { key: "phone", label: "Phone Number", type: "text" },
     { key: "email", label: "Email", type: "text" },
-    { key: "location", label: "Location", type: "text" },
+    { key: "address", label: "Address", type: "text" },
   ];
 
   return (
     <div className="py-5">
       <h1 className="text-[20px] font-medium mb-5">Contact</h1>
       <Flex vertical justify="center" gap={30} className="w-full">
-        <div className="flex items-center justify-normal bg-white p-12 w-4/5 gap-4 rounded-xl ">
-          {[
-            {
-              icon: <LiaPhoneVolumeSolid size={50} />,
-              title: "Phone",
-              details: contactInfo.phone,
-            },
-            {
-              icon: <CiMail size={50} />,
-              title: "Email",
-              details: contactInfo.email,
-            },
-            {
-              icon: <PiMapPinAreaLight size={50} />,
-              title: "Location",
-              details: contactInfo.location,
-            },
-          ].map((item, index) => (
-            <Flex
-              vertical
-              key={index}
-              gap={20}
-              align="center"
-              className="flex-auto"
-            >
-              <div className="bg-white rounded-xl shadow-[0px_0px_15px_4px_rgba(0,_0,_0,_0.1)] p-4 hover:bg-smart text-smart hover:text-white">
-                {item.icon}
+        <div className="flex items-center justify-normal bg-white p-12 w-full max-w-[800px] gap-4 rounded-xl ">
+          <div className="flex items-center gap-10">
+          <div className="">
+            <div className="bg-white flex justify-center rounded-xl shadow-[0px_0px_15px_4px_rgba(0,_0,_0,_0.1)] p-4 hover:bg-smart text-smart hover:text-white">
+                <LiaPhoneVolumeSolid size={50} />
               </div>
-              <div className="flex flex-col items-center">
-                <h2 className="text-xl font-semibold">{item.title}</h2>
-                <p className="text-gray-600">{item.details}</p>
+              <div className="flex flex-col items-center mt-5">
+                <h2 className="text-xl font-semibold">Phone</h2>
+                <p className="text-gray-600">{contactInfo?.phone}</p>
               </div>
-            </Flex>
-          ))}
+          </div>
+          <div className="">
+            <div className="bg-white flex justify-center rounded-xl text-center shadow-[0px_0px_15px_4px_rgba(0,_0,_0,_0.1)] p-4 hover:bg-smart text-smart hover:text-white">
+                <IoMailOutline size={50} />
+              </div>
+              <div className="flex flex-col items-center mt-5">
+                <h2 className="text-xl font-semibold">Email</h2>
+                <p className="text-gray-600">{contactInfo?.email}</p>
+              </div>
+          </div>
+          <div className="">
+            <div className="bg-white flex justify-center rounded-xl shadow-[0px_0px_15px_4px_rgba(0,_0,_0,_0.1)] p-4 hover:bg-smart text-smart hover:text-white">
+                <PiMapPinAreaLight size={50} className="text-center" />
+              </div>
+              <div className="flex flex-col items-center mt-5">
+                <h2 className="text-xl font-semibold">Address</h2>
+                <p className="text-gray-600">{contactInfo?.address}</p>
+              </div>
+          </div>
+          </div>
         </div>
         <button
           onClick={showModal}
-          className="w-4/5 h-12 bg-white rounded-lg border border-1 border-smart text-smart font-bold tracking-wider hover:bg-smart hover:text-white hover:transition-all duration-500"
+          className="w-full max-w-[800px] h-12 bg-white rounded-lg border border-1 border-smart text-smart font-bold tracking-wider hover:bg-smart hover:text-white hover:transition-all duration-500"
         >
           Edit Info
         </button>

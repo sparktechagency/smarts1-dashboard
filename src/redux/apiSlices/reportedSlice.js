@@ -21,10 +21,11 @@ const reportedSlice = api.injectEndpoints({
     }),
 
     // PATCH: Ignore a report
-    ignoreReported: builder.mutation({
-      query: (id) => ({
-        url: `/reported/${id}/ignore`,
+    updateReportStatus: builder.mutation({
+      query: (data) => ({
+        url: `report/status/${data?.id}`,
         method: "PATCH",
+        body: data,
       }),
     }),
 
@@ -34,5 +35,5 @@ const reportedSlice = api.injectEndpoints({
 export const {
   useGetReportedQuery,
   useBanReportedMutation,
-  useIgnoreReportedMutation,
+  useUpdateReportStatusMutation,
 } = reportedSlice;

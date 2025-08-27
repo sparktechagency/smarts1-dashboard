@@ -12,10 +12,11 @@ const customerSlice = api.injectEndpoints({
     }),
 
     // GET: Fetch Banned Customers
-    getBannedCustomers: builder.query({
-      query: () => ({
-        url: "/dashboard/customers/banned",
-        method: "GET",
+    bannedCustomers: builder.mutation({
+      query: ({id, status}) => ({
+        url: `users/admin/toggle-block/${id}?tobeStatus=${status}`,
+        // url: `users/admin/toggle-block/${id}}`,
+        method: "PATCH",
       }),
       transformResponse: (res) => res?.data, // optional
     }),
@@ -23,7 +24,7 @@ const customerSlice = api.injectEndpoints({
     // DELETE: Delete Customer by ID
     deleteCustomer: builder.mutation({
       query: (id) => ({
-        url: `/dashboard/customers/${id}`,
+        url: `/users/admin/delete/${id}`,
         method: "DELETE",
       }),
     }),
@@ -32,6 +33,6 @@ const customerSlice = api.injectEndpoints({
 
 export const {
   useGetCustomersQuery,
-  useGetBannedCustomersQuery,
+  useBannedCustomersMutation,
   useDeleteCustomerMutation,
 } = customerSlice;

@@ -4,22 +4,28 @@ const bookingSlice = api.injectEndpoints({
   endpoints: (builder) => ({
     // GET: Booking Summary
     getBookingSummary: builder.query({
-      query: ({date, searchTerm}) => {       
+      query: ({ date, currentPage, searchTerm }) => {
+        // Build the query string dynamically
+        console.log("page", currentPage)
         return {
-        url : `/dashboard/booking-summary?${date ? `date=${date}` : ''}${date && searchTerm ? `&` : ''}${searchTerm ? `searchTerm=${searchTerm}` : ''}`,
-        method: "GET",
-      }
+          url: `/dashboard/booking-summary?${date ? `date=${date}` : ""}${
+            date && searchTerm ? `&` : ""
+          }${searchTerm ? `searchTerm=${searchTerm}` : ""}${
+            date || searchTerm ? `&` : ""
+          }page=${currentPage}`,
+          method: "GET",
+        };
       },
-      transformResponse: (res) => res?.data, // optional transformation of the response
+      transformResponse: (res) => res?.data, // Optional transformation of the response
     }),
 
     // GET: Booking Summary Count
     getBookingSummaryCount: builder.query({
-      query: (date) => {                
+      query: (date) => {
         return {
-        url: `/dashboard/booking-summary-count?date=${date}`,
-        method: "GET",
-      }
+          url: `/dashboard/booking-summary-count?date=${date}`,
+          method: "GET",
+        };
       },
       transformResponse: (res) => res?.data, // optional transformation of the response
     }),
@@ -27,9 +33,5 @@ const bookingSlice = api.injectEndpoints({
 });
 
 // Export hooks for using in components
-export const {
-  useGetBookingSummaryQuery,
-  useGetBookingSummaryCountQuery,
-} = bookingSlice;
-
-
+export const { useGetBookingSummaryQuery, useGetBookingSummaryCountQuery } =
+  bookingSlice;
