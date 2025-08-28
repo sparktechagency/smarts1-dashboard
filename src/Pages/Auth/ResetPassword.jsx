@@ -1,13 +1,34 @@
-import { Button, Form, Input, ConfigProvider } from "antd";
+import { Button, Form, Input, ConfigProvider, message } from "antd";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useResetPasswordMutation } from "../../redux/apiSlices/authSlice";
 
 const ResetPassword = () => {
+
+  const [resetPassword] = useResetPasswordMutation();
+
   const email = new URLSearchParams(location.search).get("email");
   const navigate = useNavigate();
 
   const onFinish = async (values) => {
-    navigate(`/auth/login`);
+    console.log("nerwe password", values);
+    try {
+      const res = await resetPassword(values);
+
+      console.log("resetPassword pass", res);
+
+      if(res?.error){
+        message.error(res?.error?.data?.message)
+      }else{
+        message.success(res?.data?.message)
+        localStorage.removeItem("resetToken")
+        navigate(`/auth/login`);
+      }
+      
+    } catch (error) {
+        console.log("eror", error);        
+    }
+    
   };
 
   return (

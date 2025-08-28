@@ -16,9 +16,11 @@ import { MoreOutlined, DeleteFilled, EditFilled } from "@ant-design/icons";
 
 import ButtonEDU from "../../../components/common/ButtonEDU";
 import { MdMoreVert } from "react-icons/md";
-import { useCreateAdminMutation, useGetAllAdminQuery } from "../../../redux/apiSlices/settingSlice";
+import {
+  useCreateAdminMutation,
+  useGetAllAdminQuery,
+} from "../../../redux/apiSlices/settingSlice";
 import toast from "react-hot-toast";
-
 
 const AdminList = () => {
   const [searchText, setSearchText] = useState("");
@@ -33,22 +35,20 @@ const AdminList = () => {
 
   const addFormRef = useRef(null);
   const editFormRef = useRef(null);
-  
-  const {data: adminListData} = useGetAllAdminQuery();
-  const [createAdmin] = useCreateAdminMutation()
 
+  const { data: adminListData, refetch } = useGetAllAdminQuery();
+  const [createAdmin] = useCreateAdminMutation();
 
-  useEffect(()=>{
+  useEffect(() => {
     const mergedAdmins = [
       ...(adminListData?.SUPER_ADMIN?.data || []),
-      ...(adminListData?.ADMIN?.data || [])
+      ...(adminListData?.ADMIN?.data || []),
     ];
 
-    setAdmins(mergedAdmins);      
-    setFilteredData(mergedAdmins);      
-  },[adminListData])  
+    setAdmins(mergedAdmins);
+    setFilteredData(mergedAdmins);
+  }, [adminListData]);
 
- 
   // Search functionality
   const handleSearch = (e) => {
     const value = e.target.value.toLowerCase();
@@ -80,20 +80,19 @@ const AdminList = () => {
     console.log("add admin", values);
     try {
       const res = await createAdmin(values);
-
-      console.log("admin add ", res);      
-      if(res?.error){
-        toast.error(res?.error?.data?.error[0].message)
+      
+      if (res?.error) {
+        toast.error(res?.error?.data?.error[0].message);        
+      }else{
+      addFormRef.current?.resetFields();
+      toast.success("Created admin  successfully");       
+      setIsAddModalOpen(false);
+      refetch()
       }
-      message.success("Admin added successfully!");
-    } catch (error) {
-        console.log("createAdmin error", error);        
-    }
-    
-    setIsAddModalOpen(false);
-    addFormRef.current?.resetFields();
 
-    
+    } catch (error) {
+      console.log("createAdmin error", error);
+    }
   };
 
   // Open Edit Admin Modal
@@ -113,7 +112,6 @@ const AdminList = () => {
   };
 
   const handleEditAdmin = (values) => {
- 
     setIsEditModalOpen(false);
 
     message.success("Admin updated successfully!");
@@ -128,7 +126,7 @@ const AdminList = () => {
   // Confirm Delete Admin
   const handleConfirmDelete = () => {
     if (!selectedAdmin) return;
-
+    console.log("record", selectedAdmin);
 
     setIsDeleteModalOpen(false);
 
@@ -242,7 +240,7 @@ const AdminList = () => {
             },
           }}
         >
-          <Form layout="vertical" ref={editFormRef} onFinish={handleEditAdmin}>            
+          <Form layout="vertical" ref={editFormRef} onFinish={handleEditAdmin}>
             <Form.Item
               label="Email"
               name="email"
@@ -362,27 +360,19 @@ const DeleteAdmin = ({ name, onConfirm, onCancel }) => (
 );
 
 const columns = (onEdit, onDelete) => [
-  // { title: "Name", dataIndex: "name", key: "name" },
+  { title: "Name", dataIndex: "full_name", key: "full_name" },
   { title: "Email", dataIndex: "email", key: "email" },
   { title: "Role", dataIndex: "role", key: "role" },
   {
     key: "action",
     render: (_, record) => (
-      <Popover
-        content={
-          <div className="flex gap-3">
-            <Button onClick={() => onEdit(record)}>
-              <EditFilled />
-            </Button>
-            <Button onClick={() => onDelete(record)} danger>
-              <DeleteFilled />
-            </Button>
-          </div>
-        }
-        trigger="hover"
+      <Button
+        disabled={record?.role === "SUPER_ADMIN"}
+        onClick={() => onDelete(record)}
+        danger
       >
-        <MdMoreVert size={25} />
-      </Popover>
+        <DeleteFilled />
+      </Button>
     ),
   },
 ];

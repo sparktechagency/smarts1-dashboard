@@ -1,72 +1,50 @@
-import React, { useState } from "react";
 import {
-  Table,
+  CloseCircleOutlined,
+  CloudUploadOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
   ConfigProvider,
-  Modal,
   Form,
+  Image,
   Input,
+  Modal,
+  Table,
   Upload,
   message,
-  Button,
 } from "antd";
-import {
-  PlusOutlined,
-  CloudUploadOutlined,
-  CloseCircleOutlined,
-} from "@ant-design/icons";
-import ButtonEDU from "../../../components/common/ButtonEDU";
-import man from "../../../assets/man.png";
+import { useState } from "react";
 import { FiEdit2 } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import ButtonEDU from "../../../components/common/ButtonEDU";
 import GetPageName from "../../../components/common/GetPageName";
+import { imageUrl } from "../../../redux/api/baseApi";
+import { useDeleteImageMutation, useUpdateImageMutation } from "../../../redux/apiSlices/settingSlice";
+import {
+  useAddSliderMutation,
+  useGetOnBoardImageQuery
+} from "../../../redux/apiSlices/sliderSlice";
 
 function OnboardingScreeen() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
   const [uploadedImage, setUploadedImage] = useState(null);
-  const [editingKey, setEditingKey] = useState(null);
-  const [tableData, setTableData] = useState([
-    {
-      key: "1",
-      name: "man",
-      serial: 1,
-      sliderimg: man,
-      title: "lorem ipsum dolor sit amet, consectetur",
-      description: "lorem ipsum dolor sit amet, consectetur",
-    },
-    {
-      key: "2",
-      name: "man",
-      serial: 2,
-      sliderimg: man,
-      title: "lorem ipsum dolor sit amet, consectetur",
-      description: "lorem ipsum dolor sit amet, consectetur",
-    },
-    {
-      key: "3",
-      name: "man",
-      serial: 3,
-      sliderimg: man,
-      title: "lorem ipsum dolor sit amet, consectetur",
-      description: "lorem ipsum dolor sit amet, consectetur",
-    },
-    {
-      key: "4",
-      name: "man",
-      serial: 4,
-      sliderimg: man,
-      title: "lorem ipsum dolor sit amet, consectetur",
-      description: "lorem ipsum dolor sit amet, consectetur",
-    },
-  ]);
+  const [editingKey, setEditingKey] = useState(null);  
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingRecord, setDeletingRecord] = useState(null);
+  const [uploadFile, setUploadFile] = useState(null);
+
+  const { data: slidersData, refetch } = useGetOnBoardImageQuery();
+  const [addSlider] = useAddSliderMutation();
+
+  const [updateImage] = useUpdateImageMutation();
+  const [deleteImage] = useDeleteImageMutation()
 
   const showModal = () => {
     setIsEditing(false);
     setIsModalOpen(true);
-    form.resetFields();
   };
 
   const handleCancel = () => {
@@ -76,48 +54,56 @@ function OnboardingScreeen() {
     setEditingKey(null);
   };
 
-  const handleFormSubmit = (values) => {
-    if (!uploadedImage && !isEditing) {
-      message.error("Please upload an image!");
-      return;
+
+
+const handleFormSubmit = async (values) => {
+  try {
+    const formData = new FormData();
+
+    if (uploadFile && typeof uploadFile !== "string") {
+      formData.append("image", uploadFile);
     }
 
+    formData.append(
+      "data",
+      JSON.stringify({
+        title: values?.title,
+        description: values?.description,
+        imageType: "onboardingImage",
+        altText: values?.title,
+      })
+    );
+
+    let res;
     if (isEditing) {
       // Update existing row
-      const updatedData = tableData.map((item) =>
-        item.key === editingKey
-          ? {
-              ...item,
-              name: values.name || item.name,
-              title: values.title || item.title,
-              description: values.description || item.description,
-              sliderimg: uploadedImage || item.sliderimg,
-            }
-          : item
-      );
-      setTableData(updatedData);
-      message.success("Image updated successfully!");
+      res = await updateImage({ id: editingKey, formData });
+      console.log("update slider", res);
+      refetch()
     } else {
       // Add new row
-      setTableData([
-        ...tableData,
-        {
-          key: (tableData.length + 1).toString(),
-          name: values.name || "New Slider",
-          title: values.title,
-          description: values.description,
-          serial: tableData.length + 1,
-          sliderimg: uploadedImage,
-        },
-      ]);
-      message.success("Image added successfully!");
+      res = await addSlider(formData);
+      console.log("add slider", res);
+      refetch()
     }
 
+    if (res?.error) {
+      message.error(res?.error?.data?.message || "Something went wrong!");
+    } else {
+      message.success(
+        res?.data?.data?.message ||
+          (isEditing ? "Slider updated successfully!" : "Slider added successfully!")
+      );
+    }
     handleCancel();
-  };
+  } catch (error) {
+    console.error("Slider error:", error);
+    message.error("Unexpected error occurred!");
+  }
+};
 
   const handleImageUpload = (info) => {
-    const file = info.file.originFileObj;
+    const file = info.file.originFileObj; // Extract the file from info
     if (!file) return;
 
     const isImage = file.type.startsWith("image/");
@@ -125,7 +111,8 @@ function OnboardingScreeen() {
       message.error("You can only upload image files!");
       return;
     }
-
+    setUploadFile(file);
+    setUploadedImage(null);
     const reader = new FileReader();
     reader.onload = () => {
       setUploadedImage(reader.result);
@@ -135,25 +122,31 @@ function OnboardingScreeen() {
 
   const handleEdit = (record) => {
     setIsEditing(true);
-    setEditingKey(record.key);
-    setUploadedImage(record.sliderimg);
-    form.setFieldsValue({
-      name: record.name,
-      title: record.title,
-      description: record.description,
-    });
+    setEditingKey(record?._id);
+    setUploadedImage(record?.image);
+    form.setFieldsValue(record);
     setIsModalOpen(true);
   };
 
   const handleDelete = (key, name) => {
+    console.log("sdfsdf", key);
+    
     setDeletingRecord({ key, name });
     setIsDeleteModalOpen(true);
   };
 
-  const onConfirmDelete = () => {
-    setTableData(tableData.filter((item) => item.key !== deletingRecord.key));
-    message.success("Deleted successfully!");
-    setIsDeleteModalOpen(false);
+  const onConfirmDelete = async () => {
+    try {
+      const res = await deleteImage(deletingRecord?.key);
+
+      console.log("delete image", res);    
+       message.success("Slider deleted successfully!");
+    setIsDeleteModalOpen(false); 
+      refetch() 
+    } catch (error) {
+      console.log("slider delete error", error);      
+    }
+   
   };
 
   const onCancelDelete = () => {
@@ -166,28 +159,30 @@ function OnboardingScreeen() {
       title: "Sl",
       dataIndex: "serial",
       key: "serial",
-      render: (serial) => (
-        <p className="font-bold text-black text-[16px]">
-          {serial < 10 ? "0" + serial : serial}
+      render: (_, __, index) => (
+        <p className=" text-black text-[16px]">
+          {index < 10 ? index + 1 : index + 1}
         </p>
       ),
     },
     {
-      title: "Image",
-      dataIndex: "sliderimg",
-      key: "sliderimg",
-      render: (sliderimg) => <img width={60} src={sliderimg} alt="slider" />,
+      title: "Slider Image",
+      dataIndex: "image",
+      key: "image",
+      render: (image) => (
+        <Image
+          width={60}
+          height={35}
+          src={`${imageUrl}${image}`}
+          className="rounded-md"
+          alt="slider"
+        />
+      ),
     },
-
     {
-      title: "Title",
+      title: "Name",
       dataIndex: "title",
       key: "title",
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
     },
     {
       title: "Actions",
@@ -202,7 +197,7 @@ function OnboardingScreeen() {
           <RiDeleteBin6Line
             style={{ fontSize: 24 }}
             className="text-black hover:text-red-500 cursor-pointer"
-            onClick={() => handleDelete(record.key, record.name)}
+            onClick={() => handleDelete(record._id, record.title)}
           />
         </div>
       ),
@@ -219,6 +214,7 @@ function OnboardingScreeen() {
             headerSplitColor: "none",
             headerBorderRadius: "none",
             cellFontSize: "16px",
+            cellPaddingBlock: 10,
           },
           Pagination: {
             borderRadius: "3px",
@@ -249,18 +245,19 @@ function OnboardingScreeen() {
 
         <Table
           columns={columns}
-          dataSource={tableData}
+          dataSource={slidersData?.data?.result}
           pagination={{
             pageSizeOptions: [5, 10, 15, 20],
             defaultPageSize: 5,
             position: ["bottomCenter"],
           }}
         />
+        {/* </ConfigProvider> */}
 
         {/* Delete Confirmation Modal */}
         <Modal
           title="Delete Confirmation"
-          open={isDeleteModalOpen}
+          visible={isDeleteModalOpen}
           onCancel={onCancelDelete}
           footer={null}
           centered
@@ -293,24 +290,31 @@ function OnboardingScreeen() {
             <Form.Item
               label="Title"
               name="title"
-              rules={[{ required: true, message: "Please enter the Title!" }]}
+              rules={[{ required: true, message: "Please enter the name!" }]}
             >
-              <Input placeholder="Enter slider Title" className="h-9" />
+              <Input placeholder="Enter slider name" className="h-12" />
             </Form.Item>
             <Form.Item
               label="Description"
               name="description"
-              rules={[
-                { required: true, message: "Please enter the Description!" },
-              ]}
+              rules={[{ message: "Please enter the name!" }]}
             >
-              <Input placeholder="Enter slider Description" className="h-9" />
+              <Input placeholder="Enter slider name" className="h-12" />
             </Form.Item>
 
             <Form.Item label="Upload Image">
               {uploadedImage ? (
                 <div className="relative">
-                  <img src={uploadedImage} alt="Uploaded" width={100} />
+                  {/* <img src={`${imageUrl}${uploadedImage}`} alt="Uploaded" width={100} /> */}
+                  <img
+                    src={
+                      uploadedImage && uploadedImage.startsWith("data:image")
+                        ? uploadedImage
+                        : `${imageUrl}${uploadedImage}`
+                    }
+                    alt="Uploaded"
+                    width={100}
+                  />
                   <CloseCircleOutlined
                     className="absolute top-0 right-0 text-red-500 cursor-pointer"
                     onClick={() => setUploadedImage(null)}

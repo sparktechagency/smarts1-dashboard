@@ -1,19 +1,40 @@
-import { Button, Form, Typography } from "antd";
+import { Button, Form, message, Typography } from "antd";
 import React, { useState } from "react";
 import OTPInput from "react-otp-input";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  useForgotPasswordMutation,
+  useOtpVerifyMutation,
+} from "../../redux/apiSlices/authSlice";
 const { Text } = Typography;
 
 const VerifyOtp = () => {
   const navigate = useNavigate();
   const [otp, setOtp] = useState();
   const email = new URLSearchParams(location.search).get("email");
-
-  const onFinish = async (values) => {
-    navigate(`/auth/reset-password?email=${email}`);
+  const [otpVerify] = useOtpVerifyMutation();
+  const [forgotPassword] = useForgotPasswordMutation();
+  const onFinish = async () => {
+    try {
+      const res = await otpVerify({ email: email, oneTimeCode: Number(otp) });  
+      console.log("fsadfsad", res);
+          
+      if (res?.error) {
+        message.error(res?.error?.data?.message);
+      } else {
+        localStorage.setItem("resetToken", res?.data?.data?.verifyToken);
+        navigate(`/auth/reset-password?email=${email}`);
+      }
+    } catch (error) {
+      console.log("verify error", error);
+    }
   };
 
-  const handleResendEmail = async () => {};
+  const handleResendEmail = async () => {
+    const res = await forgotPassword({ email });
+    console.log("forgoty values ", res);
+      message.success("OTP has been sent to your email");
+  };
 
   return (
     <div>

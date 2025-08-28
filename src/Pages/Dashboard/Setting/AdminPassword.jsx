@@ -3,6 +3,7 @@ import { Form, Input, Card, Flex, ConfigProvider, message } from "antd";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import ButtonEDU from "../../../components/common/ButtonEDU";
 import { useChangePasswordMutation } from "../../../redux/apiSlices/authSlice";
+import Cookie from "js-cookie";
 
 function AdminPassword() {
   const [form] = Form.useForm(); // Form instance
@@ -31,6 +32,10 @@ function AdminPassword() {
       
       // Replace this with an API call to update the password
       message.success("Password updated successfully!");
+
+      localStorage.removeItem("auth", );
+      Cookie.remove("accessToken")
+      Cookie.remove("refreshToken")
 
       form.resetFields(); // Clear form after successful update
     } catch (error) {

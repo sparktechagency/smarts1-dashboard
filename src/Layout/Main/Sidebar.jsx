@@ -155,7 +155,7 @@ const Sidebar = ({ isCollapsed }) => {
     {
       key: "/pushnotification",
       icon: <TbBellBolt size={24} />,
-      label: <Link to="/pushnotification">PushNotification</Link>,
+      label: <Link to="/pushnotification">Push Notification</Link>,
     },
     {
       key: "subMenuSetting",

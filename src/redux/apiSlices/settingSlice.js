@@ -21,12 +21,29 @@ const settingSlice = api.injectEndpoints({
     }),
 
     createAdmin: builder.mutation({
-      query: (data) =>({
+      query: (data) => ({
         url: `/users/admin`,
         method: "POST",
-        body: data
+        body: data,
       }),
       transformResponse: (res) => res?.data,
+    }),
+    updateImage: builder.mutation({
+      query: ({ id, formData }) => {
+        return {
+          url: `/image/${id}`,
+          method: "PATCH",
+          body: formData, // ✅ must be body, not data
+        };
+      },
+    }),
+    deleteImage: builder.mutation({
+      query: ( id) => {
+        return {
+          url: `/image/${id}`,
+          method: "DELETE",          
+        };
+      },
     }),
   }),
 });
@@ -34,6 +51,8 @@ const settingSlice = api.injectEndpoints({
 export const {
   useGetProfileQuery,
   useUpdateAdminProfileMutation,
+  useUpdateImageMutation,
+  useDeleteImageMutation,
   useGetAllAdminQuery,
-  useCreateAdminMutation
+  useCreateAdminMutation,
 } = settingSlice;

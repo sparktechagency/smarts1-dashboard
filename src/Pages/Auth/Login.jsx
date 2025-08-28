@@ -44,6 +44,7 @@ const Login = () => {
     } catch (error) {
       console.log("sdafasdf", error)
       //  toast.error((error)?.data?.message)
+       toast.error(error)
     }
   };
 
