@@ -1,29 +1,42 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useParams, useLocation } from "react-router-dom";
-import { Avatar } from "antd";
-import { FaRegSmile, FaPaperclip, FaPaperPlane } from "react-icons/fa";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import { useGetCharByRoomIdQuery } from "../../../redux/apiSlices/chatApi";
+import { Avatar, Button } from "antd";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FaPaperclip, FaPaperPlane, FaRegSmile } from "react-icons/fa";
+import { MdOutlineReply } from "react-icons/md";
+import { useLocation, useParams } from "react-router-dom";
+import io from "socket.io-client"; // Import Socket.IO client
+import { imageUrl } from "../../../redux/api/baseApi";
+import { useProfileQuery } from "../../../redux/apiSlices/authSlice";
+import {
+  useGetCharByRoomIdQuery,
+  useSendMessageMutation,
+} from "../../../redux/apiSlices/chatApi";
 
 function ChatRoom() {
-  const { chatRoomId } = useParams(); // Get chat ID from URL
+  const { chatRoomId } = useParams();
   const location = useLocation();
-  const user = location.state?.user || {}; // Get user data from state
+  const user = location.state?.user || {};
+  const socket = useMemo(() => io(imageUrl), []);
 
-// Pass chatRoomId as arg → RTK Query will refetch automatically
-const { data: chatData, isFetching } = useGetCharByRoomIdQuery(chatRoomId);
+  const { data: chatData, refetch } = useGetCharByRoomIdQuery(chatRoomId, {
+    refetchOnMountOrArgChange: true,
+  });
+  const { data: profileData } = useProfileQuery();
+  const [sendMessage] = useSendMessageMutation();
 
-  const [messages, setMessages] = useState([]); // Use empty array to start with
+  const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState(null); // Track the selected message for reply
+  const [selectedMessage, setSelectedMessage] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    setMessages([]);
+  }, [chatRoomId]);
+
+  useEffect(() => {
     if (chatData) {
-     
-      // Map chatData to the format expected by the component
       const formattedMessages = chatData?.data?.messages?.map((msg) => ({
         id: msg?._id,
         text: msg?.text,
@@ -34,37 +47,52 @@ const { data: chatData, isFetching } = useGetCharByRoomIdQuery(chatRoomId);
         }),
         replyTo: msg?.replyTo,
       }));
-      setMessages(formattedMessages);
+      setMessages(formattedMessages.reverse());
+    } else {
+      setMessages([]);
     }
-  }, [chatData]);
+  }, [chatData, chatRoomId]);
 
-  // Function to send text message
-  const sendMessage = () => {
+  // useEffect(() => {
+  //   socket.on(`getMessage::${chatRoomId}}`, (newMessage) => {
+  //       refetch();
+  //   });
+
+  //   return () => {
+  //     socket.off("getMessage");
+  //   };
+  // }, [chatRoomId]);
+
+  useEffect(() => {
+    socket.on(`getMessage::${chatRoomId}`, (data) => {
+      console.log(data);
+      refetch();
+    });
+  }, [socket, chatRoomId]);
+
+  const handleSendMessage = async () => {
     if (messageText.trim() === "") return;
 
     const newMessage = {
-      id: messages.length + 1,
+      chatId: chatRoomId,
       text: messageText,
-      sender: "me",
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      replyTo: selectedMessage ? selectedMessage.id : null, // Attach reply to the message if any
+      sender: profileData?._id,
     };
+    try {
+      await sendMessage(newMessage);
+      refetch();
+      setMessageText("");
+      setSelectedMessage(null);
 
-    console.log("sendMessage", newMessage?.text);
-    
-
-    setMessages([...messages, newMessage]);
-    setMessageText("");
-    setSelectedMessage(null); // Clear selected message after sending
+      socket.emit("getMessage", newMessage);
+    } catch (error) {
+      console.log("error", error);
+    }
   };
 
-  // Function to handle emoji selection
   const addEmoji = (emoji) => {
     setMessageText((prev) => prev + emoji.native);
-    setShowEmojiPicker(false); // Hide the picker after selecting an emoji
+    setShowEmojiPicker(false);
   };
 
   const handleFileChange = (event) => {
@@ -83,23 +111,23 @@ const { data: chatData, isFetching } = useGetCharByRoomIdQuery(chatRoomId);
         url: URL.createObjectURL(file),
         type: file.type.startsWith("image/") ? "image" : "file",
       },
-      replyTo: selectedMessage ? selectedMessage.id : null, // Attach reply to the message if any
+      replyTo: selectedMessage ? selectedMessage.id : null,
     };
 
     setMessages([...messages, newMessage]);
 
-    // Reset the file input to allow re-selecting the same file
     event.target.value = null;
-    setSelectedMessage(null); // Clear selected message after sending
+    setSelectedMessage(null);
+
+    socket.emit("send_message", newMessage);
   };
 
   const handleMessageClick = (msg) => {
-    // Set the message to be replied to and highlight it
     setSelectedMessage(msg);
   };
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-r-lg">
+    <div className="h-full relative flex flex-col bg-white rounded-r-lg">
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b shadow-sm">
         <Avatar src={user.avatar} size={50} />
@@ -114,57 +142,99 @@ const { data: chatData, isFetching } = useGetCharByRoomIdQuery(chatRoomId);
       {/* Messages */}
       <div
         className="flex flex-col gap-3 p-4 flex-grow overflow-y-auto  [&::-webkit-scrollbar]:w-1
-  [&::-webkit-scrollbar-track]:rounded-full
-  [&::-webkit-scrollbar-track]:bg-gray-100
-  [&::-webkit-scrollbar-thumb]:rounded-full
-  [&::-webkit-scrollbar-thumb]:bg-gray-300
-  dark:[&::-webkit-scrollbar-track]:bg-slate-400
-  dark:[&::-webkit-scrollbar-thumb]:bg-slate-200"
+        [&::-webkit-scrollbar-track]:rounded-full
+        [&::-webkit-scrollbar-track]:bg-gray-100
+        [&::-webkit-scrollbar-thumb]:rounded-full
+        [&::-webkit-scrollbar-thumb]:bg-gray-300
+        dark:[&::-webkit-scrollbar-track]:bg-slate-400
+        dark:[&::-webkit-scrollbar-thumb]:bg-slate-200"
       >
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex items-start gap-2 ${msg.sender === "me" ? "justify-end" : "justify-start"} ${
-              selectedMessage?.id === msg.id ? "w-fit bg-slate-400 rounded-lg" : ""
-            }`}
-            onClick={() => handleMessageClick(msg)} // Click to select message for reply
+            className={`group flex items-start gap-2 ${
+              msg?.sender?.role === profileData?.role
+                ? "justify-end"
+                : "justify-start"
+            } `}
           >
-            {msg.sender === "other" && <Avatar src={user.avatar} size={40} />}
+            <div className="relative flex items-end gap-2 ">
+              {msg.sender === "other" && <Avatar src={user.avatar} size={40} />}
 
-            <div
-              className={`p-3 rounded-lg shadow-md max-w-[60%] ${
-                msg.sender === "me" ? "bg-blue-500 text-white rounded-br-none" : "bg-gray-200 text-black rounded-tl-none"
-              }`}
-            >
-              {msg.replyTo && (
-                <div className="bg-gray-100 p-2 rounded-md mb-2 text-sm italic">
-                  <p>{messages.find((m) => m.id === msg.replyTo)?.text}</p>
-                </div>
+              <div
+                className={`p-3 rounded-lg shadow-md max-w-[300px] ${
+                  msg?.sender?.role === profileData?.role
+                    ? "bg-blue-500 text-white rounded-br-none"
+                    : "bg-gray-200 text-black rounded-tl-none"
+                } ${
+                  selectedMessage?.id === msg.id && msg.sender === "me"
+                    ? "w-[300px] ml-2"
+                    : ""
+                }`}
+              >
+                {msg.replyTo && (
+                  <div className="bg-gray-100 p-2 rounded-md mb-2 text-sm italic">
+                    <p>{messages.find((m) => m.id === msg.replyTo)?.text}</p>
+                  </div>
+                )}
+                {msg.text && (
+                  <p
+                    className={`text-sm ${
+                      msg?.sender?.role === profileData?.role
+                        ? "text-white"
+                        : ""
+                    }`}
+                  >
+                    {msg.text}
+                  </p>
+                )}
+                {msg.file && msg.file.type === "image" && (
+                  <img
+                    src={msg.file.url}
+                    alt="Sent"
+                    className="rounded-md w-48 mt-2"
+                  />
+                )}
+                {msg.file && msg.file.type === "file" && (
+                  <a
+                    href={msg.file.url}
+                    download={msg.file.name}
+                    className="text-blue-700 underline mt-2 block"
+                  >
+                    {msg.file.name}
+                  </a>
+                )}
+                <p
+                  className={`text-xs text-right mt-1 ${
+                    msg?.sender?.role === profileData?.role
+                      ? "text-slate-300"
+                      : null
+                  }`}
+                >
+                  {msg.time}
+                </p>
+              </div>
+              {msg?.sender?.role === profileData?.role && (
+                <Avatar src={`${imageUrl}${msg?.sender?.image}`} size={40} />
               )}
-              {msg.text && (
-                <p className={`text-sm ${msg.sender === "me" ? "text-white" : ""}`}>{msg.text}</p>
+              {msg?.sender?.role !== profileData?.role && (
+                <MdOutlineReply
+                  size={20}
+                  onClick={() => handleMessageClick(msg)}
+                  className="absolute hidden top-1/2 -z-5 -translate-y-1/2 right-0 invisible group-hover:visible group-hover:-right-6 transition-all duration-300 visibility  text-gray-400 hover:text-blue-600 cursor-pointer"
+                />
               )}
-              {msg.file && msg.file.type === "image" && (
-                <img src={msg.file.url} alt="Sent" className="rounded-md w-48 mt-2" />
-              )}
-              {msg.file && msg.file.type === "file" && (
-                <a href={msg.file.url} download={msg.file.name} className="text-blue-700 underline mt-2 block">
-                  {msg.file.name}
-                </a>
-              )}
-              <p className={`text-xs text-right mt-1 ${msg.sender === "me" ? "text-slate-300" : null}`}>
-                {msg.time}
-              </p>
             </div>
-
-            {msg.sender === "me" && <Avatar src={"/your-avatar.png"} size={40} />}
           </div>
         ))}
       </div>
 
       {/* Message Input */}
       <div className="relative flex items-center p-4 border-t">
-        <button className="p-2 text-gray-600" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+        <button
+          className="p-2 text-gray-600"
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+        >
           <FaRegSmile size={24} />
         </button>
         {showEmojiPicker && (
@@ -173,7 +243,10 @@ const { data: chatData, isFetching } = useGetCharByRoomIdQuery(chatRoomId);
           </div>
         )}
 
-        <button className="p-2 text-gray-600" onClick={() => fileInputRef.current.click()}>
+        <button
+          className="p-2 text-gray-600"
+          onClick={() => fileInputRef.current.click()}
+        >
           <FaPaperclip size={24} />
         </button>
         <input
@@ -189,10 +262,19 @@ const { data: chatData, isFetching } = useGetCharByRoomIdQuery(chatRoomId);
           placeholder="Enter Message..."
           value={messageText}
           onChange={(e) => setMessageText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault(); // Prevent default Enter behavior (form submission)
+              handleSendMessage(); // Call the send message function on Enter press
+            }
+          }}
           className="flex-grow p-3 border rounded-lg focus:outline-none"
         />
 
-        <button className="ml-2 bg-blue-500 text-white p-3 rounded-lg" onClick={sendMessage}>
+        <button          
+          className="ml-2 bg-blue-500 text-white p-3 rounded-lg"
+          onClick={handleSendMessage}
+        >
           <FaPaperPlane size={20} />
         </button>
       </div>

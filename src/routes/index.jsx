@@ -29,12 +29,19 @@ import Report from "../Pages/Dashboard/Report/Report.jsx";
 import Slider from "../Pages/Dashboard/Slider/Slider.jsx";
 import OnboardingScreeen from "../Pages/Dashboard/OnboardingScreen/OnboardingScreeen.jsx";
 import PrivateRoute from "./ProtectedRoute.jsx";
+import { ChatRoomWrapper, SupportChatWrapper } from "../wrapper/Wrapper.jsx";
+
 
 const router = createBrowserRouter([
   {
     path: "/",
 
-    element: <PrivateRoute> <Main /> </PrivateRoute>,
+    element: (
+      <PrivateRoute>
+        {" "}
+        <Main />{" "}
+      </PrivateRoute>
+    ),
     children: [
       {
         path: "/",
@@ -72,14 +79,9 @@ const router = createBrowserRouter([
         element: <SupportChat />,
       },
       {
-        path: "/chat/:chatRoomId", // Change to "/chat/:chatRoomId"
-        element: <SupportChat />, // This should be your layout component
-        children: [
-          {
-            path: ":chatRoomId", // Child route for the selected chat user
-            element: <ChatRoom />,
-          },
-        ],
+        path: "/chat/:chatRoomId",
+        element: <SupportChatWrapper />,
+        children: [{path: "", element: <ChatRoomWrapper />}],
       },
       {
         path: "/pushnotification",
@@ -137,7 +139,7 @@ const router = createBrowserRouter([
       //   element: <ServiceList />,
       // },
     ],
-  },   
+  },
   {
     path: "/auth",
     element: <Auth />,
@@ -147,11 +149,11 @@ const router = createBrowserRouter([
         element: <Login />,
       },
       {
-        path: "login",
-        element: <Login />,
+        path: "forgot-password",
+        element: <ForgotPassword />,
       },
       {
-        path: "forgot-password",
+        path: "delete-account",
         element: <ForgotPassword />,
       },
       {

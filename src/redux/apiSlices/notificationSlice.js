@@ -24,10 +24,29 @@ const notificationSlice = api.injectEndpoints({
                 }
             }
         }),
+        pushNotification: builder.mutation({
+            query: (data)=>({
+                url: "/notification/admin/send-notification",
+                method: "POST",
+                body: data,
+            })
+        }),
+        getAdminNotification: builder.query({
+            query: ()=>`notification/admin${location?.search}`
+        }),
+        readAllNotification: builder.mutation({
+            query: ()=>({
+                url: "/notification/admin/read-all",
+                method: "PATCH"
+            })
+        })
     })
 })
 
 export const {
     useNotificationQuery,
-    useReadMutation
+    useReadMutation,
+    usePushNotificationMutation,
+    useGetAdminNotificationQuery,
+    useReadAllNotificationMutation
 } = notificationSlice;

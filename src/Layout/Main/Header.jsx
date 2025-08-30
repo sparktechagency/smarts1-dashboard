@@ -5,6 +5,7 @@ import { FaRegBell } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 import { useProfileQuery } from "../../redux/apiSlices/authSlice";
 import Cookies from "js-cookie";
+import { imageUrl } from "../../redux/api/baseApi";
 
 const Header = ({ toggleSidebar }) => {
   const {data: profileData, isLoading} = useProfileQuery()
@@ -20,7 +21,8 @@ const Header = ({ toggleSidebar }) => {
   const userMenuItems = [
     { label: <Button style={{width: "100%"}} onClick={handleLogout} >Log Out</Button>, key: "logout" },
   ];
-
+ 
+  
   return (
     <ConfigProvider
       theme={{
@@ -58,7 +60,7 @@ const Header = ({ toggleSidebar }) => {
           </div>
           {/* User Profile */}
           <Link to="/admin-list" className="flex items-center gap-3">
-            <Avatar shape="square" size={60} className="rounded" src={profileData?.image ? profileData?.image : "placeholder.png"} />
+            <Avatar shape="square" size={60} className="rounded" src={profileData?.image ? `${imageUrl}${profileData?.image}` : "placeholder.png"} />
           </Link>
           {/* Dropdown Menu */}
           <Flex vertical align="start">

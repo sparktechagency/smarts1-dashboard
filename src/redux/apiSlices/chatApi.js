@@ -7,6 +7,13 @@ const chatSlice = api.injectEndpoints({
     }),
     getCharByRoomId: builder.query({
       query: (id)=>`/message/${id}`
+    }),
+    sendMessage: builder.mutation({
+      query: (data)=> ({
+        url: '/message',
+        method: "POST",
+        body: data,
+      })
     })
 }),
 })
@@ -14,4 +21,5 @@ const chatSlice = api.injectEndpoints({
 export const {
 useGetChatQuery,
 useGetCharByRoomIdQuery,
+useSendMessageMutation,
 } = chatSlice

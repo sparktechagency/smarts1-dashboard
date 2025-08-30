@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { Input, Avatar, Badge } from "antd";
 import { IoIosSearch } from "react-icons/io";
 import { nanoid } from "@reduxjs/toolkit";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import man from "../../../assets/man.png";
 import { useGetChatQuery } from "../../../redux/apiSlices/chatApi";
 import { imageUrl } from "../../../redux/api/baseApi";
@@ -18,7 +18,7 @@ function SidebarContent() {
   const { data: chatData } = useGetChatQuery();
 
   console.log("chatData", chatData);
-
+  const navigate = useNavigate();
   // Filter & prioritize searched user
   const filteredUsers = people
     .filter((user) =>
@@ -28,6 +28,10 @@ function SidebarContent() {
       a.name.toLowerCase().startsWith(searchQuery.toLowerCase()) ? 1 : -1
     );
 
+  const ChatPage = (id) => {
+    navigate(`/chat/${id}`);
+    window.location.reload();
+  };
   return (
     <div className="h-full flex flex-col bg-white rounded-lg border-r">
       {/* Header Section */}
@@ -55,6 +59,7 @@ function SidebarContent() {
               key={item?.id}
               to={`/chat/${item?._id}`}
               state={{ user: item }}
+              // onClick={()=>ChatPage(item?._id)}
             >
               <div className="h-16 border-t hover:bg-slate-50 px-4">
                 <div className="flex justify-between py-2.5">
@@ -81,15 +86,32 @@ function SidebarContent() {
                       {item?.lastMessage?.createdAt
                         ? (() => {
                             const diffInMinutes = dayjs().diff(
-                              dayjs(item?.lastMessage?.createdAt),"minute");
+                              dayjs(item?.lastMessage?.createdAt),
+                              "minute"
+                            );
 
-                            if (diffInMinutes < 60) {return `${diffInMinutes} min ago`;}
+                            if (diffInMinutes < 60) {
+                              return `${diffInMinutes} min ago`;
+                            }
 
-                            const diffInHours = dayjs().diff(dayjs(item?.lastMessage?.createdAt),"hour");
-                            if (diffInHours < 24) {return `${diffInHours} hr${diffInHours > 1 ? "s" : ""} ago`;}
+                            const diffInHours = dayjs().diff(
+                              dayjs(item?.lastMessage?.createdAt),
+                              "hour"
+                            );
+                            if (diffInHours < 24) {
+                              return `${diffInHours} hr${
+                                diffInHours > 1 ? "s" : ""
+                              } ago`;
+                            }
 
-                            const diffInDays = dayjs().diff(dayjs(item?.lastMessage?.createdAt),"day");
-                            return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;})()
+                            const diffInDays = dayjs().diff(
+                              dayjs(item?.lastMessage?.createdAt),
+                              "day"
+                            );
+                            return `${diffInDays} day${
+                              diffInDays > 1 ? "s" : ""
+                            } ago`;
+                          })()
                         : "No messages yet"}
                     </p>
 

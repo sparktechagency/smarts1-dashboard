@@ -52,7 +52,7 @@ function Profile() {
                 ? URL.createObjectURL(uploadedImage)
                 : user?.image
                 ? `${imageUrl}${user.image}`
-                : man
+                : "/placeholder.png"
             }
             width={120}
             height={120}
@@ -129,6 +129,8 @@ const [updateAdminProfile] = useUpdateAdminProfileMutation()
     }
   }, [user, form]);
 
+  console.log("imgae", uploadedImage);
+  
   const handleFinish = async (values) => {
     try {           
       const formData = new FormData();

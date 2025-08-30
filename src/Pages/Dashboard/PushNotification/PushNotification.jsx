@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { Button, Dropdown, Form, Input, Menu, ConfigProvider } from "antd";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { FaRegPaperPlane } from "react-icons/fa6";
+import { usePushNotificationMutation } from "../../../redux/apiSlices/notificationSlice";
 // import purle from "../../../assets/gtdandy/purple.jpg";
 function PushNotification() {
   const [form] = Form.useForm();
   const [selectedRecipient, setSelectedRecipient] = useState("All Users");
+  const [pushNotification, {isLoading}]  = usePushNotificationMutation();
+
 
   // Dropdown menu items
   const items = [
@@ -32,11 +35,19 @@ function PushNotification() {
   };
 
   // Handle form submission
-  const onFinish = (values) => {
-    console.log("Form Values:", {
-      ...values,
-      recipient: selectedRecipient,
-    });
+  const onFinish = async (values) => {
+    const data = {            
+      title: "Admin Notification",
+      message: values?.message
+    }
+    try {
+      const res = await pushNotification(data);
+
+      console.log("push noti res", res);
+      
+    } catch (error) { 
+      console.log("error notification", error);      
+    }
   };
 
   return (
