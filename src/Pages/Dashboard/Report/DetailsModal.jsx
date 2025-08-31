@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Image, Modal } from "antd";
+import { Button, Divider, Image, Modal } from "antd";
 import evidence from "../../../assets/evidence.png"; // Image path
 import { imageUrl } from "../../../redux/api/baseApi";
 import { useUpdateReportStatusMutation } from "../../../redux/apiSlices/reportedSlice";
@@ -52,7 +52,9 @@ const handleBlockProvider = async () =>{
       footer={null}
       onCancel={() => setIsModalOpen(false)} // Close modal on cancel
     >
-      <div>
+
+      <Divider />
+      <div className="grid grid-cols-2 gap-2">
         <p>
           <strong>Report ID:</strong> {record?._id || "N/A"}
         </p>
@@ -62,6 +64,9 @@ const handleBlockProvider = async () =>{
         </p>
         <p>
           <strong>Reported By:</strong> {record?.createdBy?.full_name || "N/A"}
+        </p>
+        <p >
+          <strong>Reported Type:</strong> <span className="text-red-500">{record?.report_type || "N/A"}</span> 
         </p>
         <p>
           <strong>Status:</strong>{" "}
@@ -104,7 +109,7 @@ const handleBlockProvider = async () =>{
             ))}
         </div>
         <div className="flex items-center gap-5 mt-5 justify-end">
-        <Button onClick={()=>handleBlockProvider()} type="primary" size="large" style={{background: "rgba(180,0,0, 1)"}}>Block Provider</Button>
+        <Button disabled={record?.status == "Resolved"} onClick={()=>handleBlockProvider()} type="primary" size="large" style={{background: record?.status == "Resolved" ?  "rgba(180,0,0, .2" : "rgba(180,0,0, 1)"}}>Block Provider</Button>
         <Button onClick={()=>handleReject()} type="primary" size="large" style={{background: "blue"}}>Rejected</Button>
 
         </div>

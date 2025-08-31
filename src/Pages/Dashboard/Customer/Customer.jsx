@@ -72,7 +72,7 @@ function Customer() {
     );
     message.success(
       `${provider.customerName} has been ${
-        provider.banned ? "unbanned" : "banned"
+        provider.banned ? "unbanned" : "Blocked"
       }`
     );
   };
@@ -169,8 +169,7 @@ const handleBannedCustomer = async (id, status) =>{
         </div>
       </div>
 
-      <Table
-        rowSelection={rowSelection}
+      <Table      
         columns={columns(handleEdit, handleBan, setDeletingRecord, setIsDeleteModalOpen, handleBannedCustomer)} // Pass handleEdit and handleBan to columns
         dataSource={customersData?.result}
         pagination={{
@@ -251,10 +250,10 @@ const columns = (handleEdit, handleBan, setDeletingRecord, setIsDeleteModalOpen,
     key: "action",
     render: (_, record) => (
       <Space size="middle">
-        <Tooltip title="Banned">
+        <Tooltip title="Blocked">
           <StopOutlined
             size={20}
-            style={{ color: "blue", cursor: "pointer" }}
+            style={{ color: record?.status == "active" ? "blue" : "red", cursor: "pointer" }}
             onClick={() => handleBannedCustomer(record?._id, "blocked")}
           />
         </Tooltip>

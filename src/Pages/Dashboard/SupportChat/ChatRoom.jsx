@@ -1,11 +1,18 @@
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import { Avatar, Button } from "antd";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Avatar } from "antd";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import { FaPaperclip, FaPaperPlane, FaRegSmile } from "react-icons/fa";
 import { MdOutlineReply } from "react-icons/md";
 import { useLocation, useParams } from "react-router-dom";
-import io from "socket.io-client"; // Import Socket.IO client
+import io from "socket.io-client";
 import { imageUrl } from "../../../redux/api/baseApi";
 import { useProfileQuery } from "../../../redux/apiSlices/authSlice";
 import {
@@ -13,15 +20,17 @@ import {
   useSendMessageMutation,
 } from "../../../redux/apiSlices/chatApi";
 
-function ChatRoom() {
+function ChatRoom({ sharedFn }) {
   const { chatRoomId } = useParams();
   const location = useLocation();
   const user = location.state?.user || {};
-  const socket = useMemo(() => io(imageUrl), []);
-
-  const { data: chatData, refetch } = useGetCharByRoomIdQuery(chatRoomId, {
-    refetchOnMountOrArgChange: true,
-  });
+  // const socket = useMemo(() => io(imageUrl), []);
+  const socket = useMemo(() => io("ws://10.10.7.79:6003"), []);
+  const {
+    data: chatData,
+    refetch,
+    isLoading,
+  } = useGetCharByRoomIdQuery(chatRoomId, { refetchOnMountOrArgChange: true });
   const { data: profileData } = useProfileQuery();
   const [sendMessage] = useSendMessageMutation();
 
@@ -31,13 +40,31 @@ function ChatRoom() {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const fileInputRef = useRef(null);
 
+  const scrollContainerRef = useRef(null);
+  const scrollToBottom = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    requestAnimationFrame(() => {
+      try {
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      } catch {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+  }, []);
+
+  const handleGetAllChats = () => {
+    if (sharedFn) {
+      sharedFn();            
+    }
+  };
   useEffect(() => {
     setMessages([]);
   }, [chatRoomId]);
 
   useEffect(() => {
     if (chatData) {
-      const formattedMessages = chatData?.data?.messages?.map((msg) => ({
+      const formatted = chatData?.data?.messages?.map((msg) => ({
         id: msg?._id,
         text: msg?.text,
         sender: msg?.sender,
@@ -47,32 +74,28 @@ function ChatRoom() {
         }),
         replyTo: msg?.replyTo,
       }));
-      setMessages(formattedMessages.reverse());
+      setMessages((formatted || []).reverse());
     } else {
       setMessages([]);
     }
   }, [chatData, chatRoomId]);
 
-  // useEffect(() => {
-  //   socket.on(`getMessage::${chatRoomId}}`, (newMessage) => {
-  //       refetch();
-  //   });
-
-  //   return () => {
-  //     socket.off("getMessage");
-  //   };
-  // }, [chatRoomId]);
+  useLayoutEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   useEffect(() => {
-    socket.on(`getMessage::${chatRoomId}`, (data) => {
-      console.log(data);
+    socket.on(`getMessage::${chatRoomId}`, (message) => {
+      handleGetAllChats();
       refetch();
     });
-  }, [socket, chatRoomId]);
+    return () => {
+      socket.off(`getMessage::${chatRoomId}`);
+    };
+  }, [socket, chatRoomId, refetch]);
 
   const handleSendMessage = async () => {
-    if (messageText.trim() === "") return;
-
+    if (!messageText.trim()) return;
     const newMessage = {
       chatId: chatRoomId,
       text: messageText,
@@ -83,10 +106,9 @@ function ChatRoom() {
       refetch();
       setMessageText("");
       setSelectedMessage(null);
-
       socket.emit("getMessage", newMessage);
-    } catch (error) {
-      console.log("error", error);
+    } catch (e) {
+      console.log("error", e);
     }
   };
 
@@ -96,9 +118,8 @@ function ChatRoom() {
   };
 
   const handleFileChange = (event) => {
-    const file = event.target.files[0];
+    const file = event.target.files?.[0];
     if (!file) return;
-
     const newMessage = {
       id: messages.length + 1,
       sender: "me",
@@ -113,22 +134,16 @@ function ChatRoom() {
       },
       replyTo: selectedMessage ? selectedMessage.id : null,
     };
-
-    setMessages([...messages, newMessage]);
-
+    setMessages((prev) => [...prev, newMessage]);
     event.target.value = null;
     setSelectedMessage(null);
-
     socket.emit("send_message", newMessage);
   };
 
-  const handleMessageClick = (msg) => {
-    setSelectedMessage(msg);
-  };
+  const handleMessageClick = (msg) => setSelectedMessage(msg);
 
   return (
     <div className="h-full relative flex flex-col bg-white rounded-r-lg">
-      {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b shadow-sm">
         <Avatar src={user.avatar} size={50} />
         <div>
@@ -139,9 +154,13 @@ function ChatRoom() {
         </div>
       </div>
 
-      {/* Messages */}
+      <button onClick={() => sharedFn && sharedFn()}>
+        Call ChildA's function from ChildB
+      </button>
       <div
-        className="flex flex-col gap-3 p-4 flex-grow overflow-y-auto  [&::-webkit-scrollbar]:w-1
+        ref={scrollContainerRef}
+        className="flex flex-col gap-3 p-4 flex-grow overflow-y-auto
+        [&::-webkit-scrollbar]:w-1
         [&::-webkit-scrollbar-track]:rounded-full
         [&::-webkit-scrollbar-track]:bg-gray-100
         [&::-webkit-scrollbar-thumb]:rounded-full
@@ -156,11 +175,10 @@ function ChatRoom() {
               msg?.sender?.role === profileData?.role
                 ? "justify-end"
                 : "justify-start"
-            } `}
+            }`}
           >
-            <div className="relative flex items-end gap-2 ">
+            <div className="relative flex items-end gap-2">
               {msg.sender === "other" && <Avatar src={user.avatar} size={40} />}
-
               <div
                 className={`p-3 rounded-lg shadow-md max-w-[300px] ${
                   msg?.sender?.role === profileData?.role
@@ -193,6 +211,7 @@ function ChatRoom() {
                     src={msg.file.url}
                     alt="Sent"
                     className="rounded-md w-48 mt-2"
+                    onLoad={scrollToBottom}
                   />
                 )}
                 {msg.file && msg.file.type === "file" && (
@@ -208,7 +227,7 @@ function ChatRoom() {
                   className={`text-xs text-right mt-1 ${
                     msg?.sender?.role === profileData?.role
                       ? "text-slate-300"
-                      : null
+                      : ""
                   }`}
                 >
                   {msg.time}
@@ -221,7 +240,7 @@ function ChatRoom() {
                 <MdOutlineReply
                   size={20}
                   onClick={() => handleMessageClick(msg)}
-                  className="absolute hidden top-1/2 -z-5 -translate-y-1/2 right-0 invisible group-hover:visible group-hover:-right-6 transition-all duration-300 visibility  text-gray-400 hover:text-blue-600 cursor-pointer"
+                  className="absolute hidden top-1/2 -z-5 -translate-y-1/2 right-0 invisible group-hover:visible group-hover:-right-6 transition-all duration-300 text-gray-400 hover:text-blue-600 cursor-pointer"
                 />
               )}
             </div>
@@ -229,7 +248,6 @@ function ChatRoom() {
         ))}
       </div>
 
-      {/* Message Input */}
       <div className="relative flex items-center p-4 border-t">
         <button
           className="p-2 text-gray-600"
@@ -242,10 +260,9 @@ function ChatRoom() {
             <Picker data={data} onEmojiSelect={addEmoji} />
           </div>
         )}
-
         <button
           className="p-2 text-gray-600"
-          onClick={() => fileInputRef.current.click()}
+          onClick={() => fileInputRef.current?.click()}
         >
           <FaPaperclip size={24} />
         </button>
@@ -256,7 +273,6 @@ function ChatRoom() {
           className="hidden"
           accept="image/*, .pdf, .doc, .docx"
         />
-
         <input
           type="text"
           placeholder="Enter Message..."
@@ -264,14 +280,13 @@ function ChatRoom() {
           onChange={(e) => setMessageText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault(); // Prevent default Enter behavior (form submission)
-              handleSendMessage(); // Call the send message function on Enter press
+              e.preventDefault();
+              handleSendMessage();
             }
           }}
           className="flex-grow p-3 border rounded-lg focus:outline-none"
         />
-
-        <button          
+        <button
           className="ml-2 bg-blue-500 text-white p-3 rounded-lg"
           onClick={handleSendMessage}
         >

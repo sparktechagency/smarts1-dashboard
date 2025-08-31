@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import man from "../../../assets/man.png";
 import { FaFeather } from "react-icons/fa6";
-import { Button, ConfigProvider, Form, Input, Upload, message } from "antd";
+import { Avatar, Button, ConfigProvider, Form, Input, Upload, message } from "antd";
 import { HiMiniPencil } from "react-icons/hi2";
 
 import { imageUrl } from "../../../redux/api/baseApi";
@@ -46,7 +46,8 @@ function Profile() {
     >
       <div className="bg-quilocoP w-4/5 min-h-72 flex flex-col justify-start items-center px-4 border bg-white rounded-lg">
         <div className="relative mt-6 flex flex-col items-center justify-center">
-          <img
+          <Avatar
+            size={90}
             src={
               uploadedImage
                 ? URL.createObjectURL(uploadedImage)
@@ -54,9 +55,8 @@ function Profile() {
                 ? `${imageUrl}${user.image}`
                 : "/placeholder.png"
             }
-            width={120}
-            height={120}
-            className="border border-slate-500 rounded-full object-cover"
+
+            className="border rounded-full border-slate-500 !object-cover"
           />
           {showButton && (
             <Upload
@@ -79,7 +79,7 @@ function Profile() {
               </button>
             </Upload>
           )}
-          <h3 className="text-black text-xl mt-3">{user?.name}</h3>
+          <h3 className="text-black text-xl mt-2">{user?.name}</h3>
         </div>
         <div className="w-full flex justify-end">
           <Button
@@ -98,6 +98,7 @@ function Profile() {
           </Button>
         </div>
         <ProfileDetails
+        profileRefetch={refetch}
           showButton={showButton}
           setShowButton={setShowButton}
           user={user}
@@ -110,7 +111,7 @@ function Profile() {
 
 export default Profile;
 
-const ProfileDetails = ({ showButton, setShowButton, user, uploadedImage }) => {
+const ProfileDetails = ({ showButton, profileRefetch, setShowButton, user, uploadedImage }) => {
   const [form] = Form.useForm();
   const { updateUser } = useUser();
 const [updateAdminProfile] = useUpdateAdminProfileMutation()
@@ -128,8 +129,6 @@ const [updateAdminProfile] = useUpdateAdminProfileMutation()
       });
     }
   }, [user, form]);
-
-  console.log("imgae", uploadedImage);
   
   const handleFinish = async (values) => {
     try {           
@@ -140,8 +139,8 @@ const [updateAdminProfile] = useUpdateAdminProfileMutation()
       }
 
       const data = {
-        name: values.name,
-        phone: values.phone,
+        full_name: values?.name,
+        phone: values?.phone,
       };
 
       formData.append("data", JSON.stringify(data));
@@ -149,14 +148,16 @@ const [updateAdminProfile] = useUpdateAdminProfileMutation()
       const response = await updateAdminProfile(formData).unwrap();
       if (response.success) {
         message.success("Profile updated successfully!");
-        setShowButton(false);
-        refetch();
+        setShowButton(false);        
+        profileRefetch()        
         if (updateUser && response.data) {
           updateUser(response.data); // ✅ update global context
         }
       }
     } catch (error) {
-      message.error(error?.data?.message || "Failed to update profile.");
+      message.error(error?.data?.message);
+      console.log("error", error);
+      
     }
   };
 

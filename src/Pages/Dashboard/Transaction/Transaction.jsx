@@ -166,18 +166,18 @@ function Transaction() {
         </p>
       ),
     },
-    {
-      title: "Actions",
-      key: "action",
-      render: (_, record) => (
-        <div className="flex gap-4">
-          <IoEye
-            style={{ fontSize: 24 }}
-            className="text-black hover:text-blue-500 cursor-pointer"
-          />          
-        </div>
-      ),
-    },
+    // {
+    //   title: "Actions",
+    //   key: "action",
+    //   render: (_, record) => (
+    //     <div className="flex gap-4">
+    //       <IoEye
+    //         style={{ fontSize: 24 }}
+    //         className="text-black hover:text-blue-500 cursor-pointer"
+    //       />          
+    //     </div>
+    //   ),
+    // },
   ];
 
   return (

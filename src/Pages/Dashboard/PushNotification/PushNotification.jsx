@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Dropdown, Form, Input, Menu, ConfigProvider } from "antd";
+import { Button, Dropdown, Form, Input, Menu, ConfigProvider, message } from "antd";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { FaRegPaperPlane } from "react-icons/fa6";
 import { usePushNotificationMutation } from "../../../redux/apiSlices/notificationSlice";
@@ -38,12 +38,14 @@ function PushNotification() {
   const onFinish = async (values) => {
     const data = {            
       title: "Admin Notification",
+      heading: values?.heading,
       message: values?.message
     }
     try {
       const res = await pushNotification(data);
 
-      console.log("push noti res", res);
+      message.success(res?.data?.message);
+      form.resetFields()
       
     } catch (error) { 
       console.log("error notification", error);      
@@ -69,7 +71,7 @@ function PushNotification() {
             {/* Title */}
             <Form.Item
               label="Title"
-              name="title"
+              name="heading"
               rules={[{ required: true, message: "Title is required" }]}
             >
               <Input

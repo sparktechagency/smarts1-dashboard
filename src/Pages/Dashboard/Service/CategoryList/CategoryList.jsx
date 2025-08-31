@@ -98,6 +98,10 @@ function CategoryList() {
   const [createCategory] = useCreateCategoryMutation()
   const [updateCategory] = useUpdateCategoryMutation()
   
+  // -------------- Column Sl No set -------------
+    const pageSize = serviceCategory?.meta?.limit ?? 10;
+
+
   const showModal = () => {
     setIsEditing(false);
     setIsModalOpen(true);
@@ -208,8 +212,10 @@ function CategoryList() {
   const columns = [
     {
       title: "Sl",
-      dataIndex: "serial",
+       dataIndex: "serial",
       key: "serial",
+      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1,
+
     },
     {
       title: "Category",
@@ -250,7 +256,7 @@ function CategoryList() {
               onClick={() =>{setOpenDetailModal(true); setSelectedCategory(record?._id)}}
             />
           </Tooltip>
-          <Tooltip title="Banned">
+          <Tooltip title="Blocked">
             <StopOutlined
               size={20}
               style={{ color: "blue", cursor: "pointer" }}
@@ -318,10 +324,9 @@ function CategoryList() {
           columns={columns}
           dataSource={serviceCategory?.result}
           rowKey="key"
-          pagination={{
-          defaultPageSize: serviceCategory?.meta?.limit,
+          pagination={{          
           position: ["bottomRight"],
-          size: "default",
+          pageSize,
           current: currentPage,
           total: serviceCategory?.meta?.total,
           showSizeChanger: true,

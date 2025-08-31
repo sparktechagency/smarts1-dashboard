@@ -18,6 +18,7 @@ import ButtonEDU from "../../../components/common/ButtonEDU";
 import { MdMoreVert } from "react-icons/md";
 import {
   useCreateAdminMutation,
+  useDeleteAdminMutation,
   useGetAllAdminQuery,
 } from "../../../redux/apiSlices/settingSlice";
 import toast from "react-hot-toast";
@@ -38,6 +39,7 @@ const AdminList = () => {
 
   const { data: adminListData, refetch } = useGetAllAdminQuery();
   const [createAdmin] = useCreateAdminMutation();
+  const [deleteAdmin] = useDeleteAdminMutation();
 
   useEffect(() => {
     const mergedAdmins = [
@@ -80,16 +82,15 @@ const AdminList = () => {
     console.log("add admin", values);
     try {
       const res = await createAdmin(values);
-      
-      if (res?.error) {
-        toast.error(res?.error?.data?.error[0].message);        
-      }else{
-      addFormRef.current?.resetFields();
-      toast.success("Created admin  successfully");       
-      setIsAddModalOpen(false);
-      refetch()
-      }
 
+      if (res?.error) {
+        toast.error(res?.error?.data?.error[0].message);
+      } else {
+        addFormRef.current?.resetFields();
+        toast.success("Created admin  successfully");
+        setIsAddModalOpen(false);
+        refetch();
+      }
     } catch (error) {
       console.log("createAdmin error", error);
     }
@@ -124,13 +125,18 @@ const AdminList = () => {
   };
 
   // Confirm Delete Admin
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!selectedAdmin) return;
     console.log("record", selectedAdmin);
-
-    setIsDeleteModalOpen(false);
-
-    message.success("Admin deleted successfully!");
+    try {
+      await  deleteAdmin(selectedAdmin?._id)
+      setIsDeleteModalOpen(false);
+      refetch()
+      message.success("Admin deleted successfully!");
+    } catch (error) {
+      console.log("admin error", error);
+      
+    }
   };
 
   const handleMenuClick = (e) => {

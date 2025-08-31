@@ -7,7 +7,7 @@ const GroupChatAvatar = ({ members }) => {
 
   // 1 member → full circle
   if (members.length === 1) {
-    return <Avatar src={`${imageUrl}${members[0]?.image}`} size={96} />;
+    return <Avatar src={`${imageUrl}${members[0]?.image}`} size={40} />;
   }
 
   // 2 members → 50/50 split

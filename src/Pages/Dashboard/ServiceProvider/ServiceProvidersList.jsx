@@ -169,8 +169,7 @@ function ServiceProvider() {
         </div>
       </div>
 
-      <Table
-        rowSelection={rowSelection}
+      <Table        
         rowKey="_id"
         columns={columns(
           setDeletingRecord,
@@ -247,14 +246,20 @@ const columns = (
     render: (value) => `$${value}`,
   },
   {
+    title: "Status",
+    dataIndex: "status",
+    key: "status",
+    render: (text) => <span className="capitalize">{text}</span> ,
+  },
+  {
     title: "Action",
     key: "action",
     render: (_, record) => (
       <Space size="middle">
-        <Tooltip title="Banned">
+        <Tooltip title="Blocked">
           <StopOutlined
             size={20}
-            style={{ color: "blue", cursor: "pointer" }}
+            style={{ color: record?.status == "active" ? "blue" : "red", cursor: "pointer" }}
             onClick={() => handleBannedProvider(record?._id, "blocked")}
           />
         </Tooltip>

@@ -8,7 +8,7 @@ endpoints: (builder) => ({
     }),
     addFAQ: builder.mutation({
       query: (data) => ({
-        url: "/faq",
+        url: `/faq${location.search}`,
         method: "POST",
         body: data,
       }),

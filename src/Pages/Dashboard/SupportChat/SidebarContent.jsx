@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Input, Avatar, Badge } from "antd";
 import { IoIosSearch } from "react-icons/io";
 import { nanoid } from "@reduxjs/toolkit";
@@ -12,21 +12,21 @@ import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
-function SidebarContent() {
+function SidebarContent({onShareFn }) {
   const [searchQuery, setSearchQuery] = useState("");
   const usersContainerRef = useRef(null);
-  const { data: chatData } = useGetChatQuery();
+  const { data: chatData,  refetch, isLoading} = useGetChatQuery();
 
-  console.log("chatData", chatData);
+   const handleGetData = () => {
+    refetch()    
+  };
+
+  useEffect(()=>{
+    onShareFn(handleGetData)
+  },[])
+
   const navigate = useNavigate();
-  // Filter & prioritize searched user
-  const filteredUsers = people
-    .filter((user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) =>
-      a.name.toLowerCase().startsWith(searchQuery.toLowerCase()) ? 1 : -1
-    );
+  
 
   const ChatPage = (id) => {
     navigate(`/chat/${id}`);
@@ -83,6 +83,7 @@ function SidebarContent() {
 
                   <div className="flex flex-col gap-2 items-end">
                     <p>
+                     
                       {item?.lastMessage?.createdAt
                         ? (() => {
                             const diffInMinutes = dayjs().diff(

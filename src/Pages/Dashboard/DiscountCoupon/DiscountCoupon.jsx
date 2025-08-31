@@ -160,8 +160,7 @@ function DiscountCoupon() {
         </div>
       </div>
 
-      <Table
-        rowSelection={rowSelection}
+      <Table        
         columns={columns(handleEdit, handleDeleteCoupon, handleCouponStatusToggle)} // Pass handleEdit to columns
         dataSource={couponsData?.result}
         pagination={{
@@ -247,10 +246,10 @@ const columns = (handleEdit, handleDeleteCoupon, handleCouponStatusToggle) => [
               onClick={() =>handleEdit(record)}
             />
           </Tooltip>
-          <Tooltip title="Banned">
+          <Tooltip title="Blocked">
             <StopOutlined
               size={20}
-              style={{ color: "blue", cursor: "pointer" }}
+              style={{ color: record?.isActive ? "blue" : "red", cursor: "pointer" }}
               onClick={() => handleCouponStatusToggle(record)}
             />
           </Tooltip>

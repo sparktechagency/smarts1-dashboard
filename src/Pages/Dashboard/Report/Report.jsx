@@ -96,21 +96,10 @@ function Report() {
               { value: "Under Review", label: "Under Review" },
             ]}
           />
-
-          {/* {selectedRowKeys.length > 0 && (
-            <Button
-              icon={<RiDeleteBin6Line />}
-              onClick={handleDeleteSelected}
-              className="bg-smart hover:bg-smart text-white border-none h-9"
-            >
-              Delete Selected
-            </Button>
-          )} */}
         </div>
       </div>
 
-      <Table
-        rowSelection={rowSelection}
+      <Table        
         columns={columns(handleViewDetails)}
         dataSource={transactionData?.result}
         pagination={{

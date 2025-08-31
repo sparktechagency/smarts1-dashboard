@@ -15,6 +15,12 @@ const settingSlice = api.injectEndpoints({
         body: data, // ✅ must send the formData here
       }),
     }),
+    deleteAdmin: builder.mutation({
+      query: (id) => ({
+        url: `users/admin/delete/${id}`,
+        method: "DELETE",      
+      }),
+    }),
     getAllAdmin: builder.query({
       query: () => `/users/get-all`,
       transformResponse: (res) => res?.data,
@@ -55,4 +61,5 @@ export const {
   useDeleteImageMutation,
   useGetAllAdminQuery,
   useCreateAdminMutation,
+  useDeleteAdminMutation,
 } = settingSlice;

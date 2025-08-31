@@ -16,6 +16,7 @@ export const api = createApi({
     },
      credentials: "include",
     }),
+    tagTypes: ["Chat"],
     endpoints: () => ({})
 });
 

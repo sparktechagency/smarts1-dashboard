@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Collapse,
   Modal,
@@ -18,6 +18,8 @@ import {
   useUpdateFAQMutation,
 } from "../../../redux/apiSlices/faqSlice";
 import toast from "react-hot-toast";
+import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
+import { getSearchParams } from "../../../utility/getSearchParams";
 
 const defaultText = `A dog is a type of domesticated animal. Known for its loyalty and faithfulness, it can be found as a welcome guest in many households across the world.`;
 
@@ -50,6 +52,12 @@ export default function FaqCollapse() {
     { key: "3", question: "What is a bird?", answer: defaultText },
   ]);
 
+  const {type} = getSearchParams()
+
+  useEffect(()=>{
+    refetch()
+  },[type]);
+  
   // State for Add/Edit FAQ Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editFaq, setEditFaq] = useState(null);
@@ -58,6 +66,10 @@ export default function FaqCollapse() {
   // State for Delete Confirmation Modal
   const [deleteFaq, setDeleteFaq] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const updateSearchParams = useUpdateSearchParams();
+
+
 
   // Open modal for adding a new FAQ
   const showAddModal = () => {
@@ -210,6 +222,7 @@ export default function FaqCollapse() {
             >
               <Select
                 placeholder="Select type"
+                onChange={(value)=>updateSearchParams({type: value})}
                 options={[
                   { label: "Service", value: "Service" },
                   { label: "Settings", value: "Settings" },
