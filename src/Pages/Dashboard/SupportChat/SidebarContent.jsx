@@ -1,37 +1,53 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Input, Avatar, Badge } from "antd";
 import { IoIosSearch } from "react-icons/io";
 import { nanoid } from "@reduxjs/toolkit";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import man from "../../../assets/man.png";
 import { useGetChatQuery } from "../../../redux/apiSlices/chatApi";
-import { imageUrl } from "../../../redux/api/baseApi";
+import { imageUrl, socketUrl } from "../../../redux/api/baseApi";
 import dayjs from "dayjs";
 import GroupChatAvatar from "./GroupChatAvatar";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { io } from "socket.io-client";
+import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
+import { getSearchParams } from "../../../utility/getSearchParams";
 
 dayjs.extend(relativeTime);
 
-function SidebarContent({onShareFn }) {
+function SidebarContent({ onShareFn }) {
   const [searchQuery, setSearchQuery] = useState("");
   const usersContainerRef = useRef(null);
-  const { data: chatData,  refetch, isLoading} = useGetChatQuery();
-
-   const handleGetData = () => {
-    refetch()    
-  };
-
-  useEffect(()=>{
-    onShareFn(handleGetData)
-  },[])
-
+  const { data: chatData, refetch, isLoading } = useGetChatQuery();
+  const { chatRoomId } = useParams();
+  const socket = useMemo(() => io(socketUrl), []);
+  const handleGetData = () => { refetch();};
   const navigate = useNavigate();
-  
 
-  const ChatPage = (id) => {
-    navigate(`/chat/${id}`);
-    window.location.reload();
-  };
+
+
+  const updateSearchParam = useUpdateSearchParams()
+  const {searchTerm} = getSearchParams()
+
+
+  
+    useEffect(() => {       
+      refetch();    
+  }, [searchTerm]);
+
+  useEffect(() => {
+
+
+    socket.on(`getMessage::${chatRoomId}`, (message) => {
+      refetch();
+    });
+    return () => {
+      socket.off(`getMessage::${chatRoomId}`);
+    };
+    
+  }, [socket, chatRoomId, refetch, ]);
+
+
   return (
     <div className="h-full flex flex-col bg-white rounded-lg border-r">
       {/* Header Section */}
@@ -41,9 +57,8 @@ function SidebarContent({onShareFn }) {
           prefix={<IoIosSearch />}
           placeholder="Search..."
           className="h-10 w-[90%] gap-2"
-          allowClear
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          allowClear          
+          onChange={(e) => updateSearchParam({searchTerm : e.target.value})}
         />
         <p className="text-[#343A40] font-semibold">Recent</p>
       </div>
@@ -77,13 +92,14 @@ function SidebarContent({onShareFn }) {
                     </Badge>
                     <div>
                       <h3>{item?.participants[0]?.full_name}</h3>
-                      <p>{item?.lastMessage?.text}</p>
+                      <p>{item?.lastMessage?.text.split("").slice(0,25)}
+                        {item?.lastMessage?.text.split("").length > 25 && '...'}
+                        </p>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2 items-end">
                     <p>
-                     
                       {item?.lastMessage?.createdAt
                         ? (() => {
                             const diffInMinutes = dayjs().diff(
@@ -135,12 +151,3 @@ function SidebarContent({onShareFn }) {
 }
 
 export default SidebarContent;
-
-// Dummy Data
-const people = [...Array(30)].map((_, i) => ({
-  id: nanoid(),
-  name: `John Doe ${i + 1}`,
-  lastSeen: Math.floor(Math.random() * 10) + 1,
-  newMessageCount: i % 3 === 0 ? Math.floor(Math.random() * 5) : 0,
-  avatar: i % 2 === 0 ? man : "",
-}));

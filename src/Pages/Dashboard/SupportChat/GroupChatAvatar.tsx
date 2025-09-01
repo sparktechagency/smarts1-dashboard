@@ -5,6 +5,8 @@ import { imageUrl } from "../../../redux/api/baseApi";
 const GroupChatAvatar = ({ members }) => {
   if (!members || members.length === 0) return null;
 
+  console.log("assadfs", members);
+  
   // 1 member → full circle
   if (members.length === 1) {
     return <Avatar src={`${imageUrl}${members[0]?.image}`} size={40} />;

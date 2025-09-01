@@ -22,5 +22,6 @@ export const api = createApi({
 
 // export const imageUrl = "http://206.189.231.81:5000";
 export const imageUrl = "http://10.10.7.79:7003";
+export const socketUrl = "ws://10.10.7.79:6003";
 
 // http://10.10.7.79:7003/api/v1

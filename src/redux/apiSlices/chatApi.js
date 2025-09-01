@@ -3,12 +3,12 @@ import { api } from "../api/baseApi";
 const chatSlice = api.injectEndpoints({
   endpoints: (builder) => ({
     getChat: builder.query({
-      query: () => `/chat`,
-      providesTags: ["Chat"]
+      query: () => `/chat${location?.search}`,
+      // providesTags: ["Chat"]
     }),
     getCharByRoomId: builder.query({
       query: (id)=>`/message/${id}`,
-      providesTags: ['Messages'],
+      // providesTags: ['Messages'],
     }),
     sendMessage: builder.mutation({
       query: (data)=> ({
@@ -16,7 +16,7 @@ const chatSlice = api.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ['Messages', "Chat"]
+      // invalidatesTags: ['Messages', "Chat"]
     })
 }),
 })
