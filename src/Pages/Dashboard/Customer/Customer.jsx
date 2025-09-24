@@ -1,35 +1,29 @@
-import React, { useEffect, useState } from "react";
 import {
-  Table,
+  DeleteOutlined,
+  SearchOutlined,
+  StopOutlined
+} from "@ant-design/icons";
+import {
   Avatar,
+  Button,
   ConfigProvider,
   Input,
-  Button,
   message,
   Space,
+  Table,
   Tooltip,
 } from "antd";
-import {
-  SearchOutlined,
-  DeleteOutlined,
-  EyeOutlined,
-  StopOutlined,
-} from "@ant-design/icons";
-import GetPageName from "../../../components/common/GetPageName";
-import PopOver from "../../../components/common/PopOver";
-import CustomerEditModal from "./CustomerEditModal";
-import { LuDownload } from "react-icons/lu";
-import { useBannedCustomersMutation,  useDeleteCustomerMutation, useGetCustomersQuery } from "../../../redux/apiSlices/customersSlice";
-import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
-import { getSearchParams } from "../../../utility/getSearchParams";
-import { GoTrash } from "react-icons/go";
-import DeleteCategoryModal from "../Service/CategoryList/DeleteCategoryModal";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { GoTrash } from "react-icons/go";
+import GetPageName from "../../../components/common/GetPageName";
+import { useBannedCustomersMutation, useDeleteCustomerMutation, useGetCustomersQuery } from "../../../redux/apiSlices/customersSlice";
+import { getSearchParams } from "../../../utility/getSearchParams";
+import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
+import DeleteCategoryModal from "../Service/CategoryList/DeleteCategoryModal";
+import CustomerEditModal from "./CustomerEditModal";
 
-function Customer() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [userData, setUserData] = useState(data);
+function Customer() {  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState(null);
 
@@ -52,10 +46,6 @@ function Customer() {
     updateSearchParams({ page: currentPage });
   }, [currentPage]);
 
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: setSelectedRowKeys,
-  };
 
   // Handle edit button click
   const handleEdit = (record) => {
@@ -157,21 +147,13 @@ const handleBannedCustomer = async (id, status) =>{
             className="h-9 gap-2"
             allowClear
           />
-          {selectedRowKeys.length > 0 && (
-            <Button
-              icon={<DeleteOutlined />}
-              onClick={handleDeleteSelected}
-              className="bg-smart hover:bg-smart text-white border-none h-9"
-            >
-              Delete Selected
-            </Button>
-          )}
         </div>
       </div>
 
       <Table      
         columns={columns(handleEdit, handleBan, setDeletingRecord, setIsDeleteModalOpen, handleBannedCustomer)} // Pass handleEdit and handleBan to columns
         dataSource={customersData?.result}
+        loading={isLoading}
         pagination={{
           defaultPageSize: customersData?.meta?.limit,
           position: ["bottomRight"],
@@ -267,30 +249,5 @@ const columns = (handleEdit, handleBan, setDeletingRecord, setIsDeleteModalOpen,
         </Tooltip>
       </Space>
     ),
-  },
-];
-
-const data = [
-  {
-    key: 1,
-    customerName: "John Doe",
-    email: "johndoe@gmail.com",
-
-    phoneNumber: "+1234567890",
-    address: "10 Warehouse Road, Apapa, Lagos",
-    spent: "$5000",
-    avatar: "",
-    banned: false, // Add banned field
-  },
-  {
-    key: 2,
-    customerName: "Jane Smith",
-    email: "janesmith@gmail.com",
-
-    phoneNumber: "+1234567891",
-    address: "15 Broad Street, Lagos",
-    spent: "$4500",
-    avatar: "",
-    banned: false, // Add banned field
   },
 ];
