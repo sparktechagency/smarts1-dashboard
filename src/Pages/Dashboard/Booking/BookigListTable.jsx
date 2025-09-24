@@ -201,8 +201,7 @@ const columns = [
       dataSource={bookingData?.result}
       columns={columns}
       rowClassName="editable-row"
-      pagination={{
-        onChange: cancel,
+      pagination={{        
         defaultPageSize: bookingData?.meta?.limit,
         position: ["bottomRight"],
         size: "default",
