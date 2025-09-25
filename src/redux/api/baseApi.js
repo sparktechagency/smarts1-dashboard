@@ -7,7 +7,7 @@ export const api = createApi({
         // baseUrl: "http://206.189.231.81:5000/api/v1"
         // baseUrl: "http://10.10.7.79:7003/api/v1",        
         baseUrl: import.meta.env.BASE_URL,        
-        // baseUrl: 'http://157.241.34.32:3000/api/v1',        
+        // baseUrl: 'http://157.241.91.8:3000/api/v1',        
          prepareHeaders: (headers) => {
       headers.set("ngrok-skip-browser-warning", "true");
       const token = Cookies.get("accessToken");
@@ -24,5 +24,5 @@ export const api = createApi({
 
 export const imageUrl = import.meta.env.BASE_URL;
 export const socketUrl = import.meta.env.SOCKET_URL;
-// export const imageUrl = 'http://157.241.34.32:3000';
-// export const socketUrl = 'http://157.241.34.32:3000/api/v1';
+// export const imageUrl = 'http://157.241.91.8:3000';
+// export const socketUrl = 'http://157.241.91.8:3000/api/v1';
