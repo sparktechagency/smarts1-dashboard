@@ -34,8 +34,7 @@ function SidebarContent({ onShareFn, chatRoomId }) {
   }, [searchTerm]);
 
   useEffect(() => {
-    console.log("user user", user);
-    
+   
     socket.on(`getMessage::${user}`, (message) => {
       refetch();
     });

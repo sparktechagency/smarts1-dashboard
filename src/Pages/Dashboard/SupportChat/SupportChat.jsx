@@ -11,7 +11,6 @@ function SupportChat({ chatRoomId }) {
   const handleReceiveFn = (fn) => {
     setSharedFn(() => fn);
   };
-console.log("handleReceiveFn", chatRoomId);
 
   return (
     <div className="w-full h-[85vh] flex relative rounded-lg overflow-hidden">

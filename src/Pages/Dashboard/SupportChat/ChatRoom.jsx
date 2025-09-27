@@ -131,10 +131,7 @@ function ChatRoom({ sharedFn }) {
   };
 
   const handleMessageClick = (msg) => setSelectedMessage(msg);
-  
-console.log("chec mesage", messages);
-
-  return (
+    return (
     <div className="h-full relative flex flex-col bg-white rounded-r-lg">
       <div className="flex items-center gap-3 p-4 border-b shadow-sm">        
         <GroupChatAvatar
