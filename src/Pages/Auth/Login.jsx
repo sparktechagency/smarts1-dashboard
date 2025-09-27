@@ -6,6 +6,7 @@ import { useLoginMutation } from "../../redux/apiSlices/authSlice";
 import toast from "react-hot-toast";
 import { useForm } from "antd/es/form/Form";
 import Cookies from "js-cookie";
+import { FaSpinner } from "react-icons/fa6";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -125,9 +126,9 @@ const Login = () => {
 
               marginTop: 20,
             }}
-            className="flex items-center justify-center bg-smart hover:bg-smart/90 rounded-lg text-base"
+            className="flex items-center gap-2 justify-center bg-smart hover:bg-smart/90 rounded-lg text-base"
           >
-            {/* {isLoading? < Spinner/> : "Sign in"} */} Sign in
+           {isLoading && < FaSpinner className="spinner-animate"/>}  Sign in
           </button>
         </Form.Item>
       </Form>

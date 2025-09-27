@@ -3,40 +3,46 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IoIosSearch } from "react-icons/io";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { io } from "socket.io-client";
 import { socketUrl } from "../../../redux/api/baseApi";
 import { useGetChatQuery } from "../../../redux/apiSlices/chatApi";
+import { useGetProfileQuery } from "../../../redux/apiSlices/settingSlice";
 import { getSearchParams } from "../../../utility/getSearchParams";
 import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
 import GroupChatAvatar from "./GroupChatAvatar";
-
 dayjs.extend(relativeTime);
 
-function SidebarContent({ onShareFn, chatRoomId }) {  
+function SidebarContent({ onShareFn, chatRoomId }) {
   const usersContainerRef = useRef(null);
-  const { data: chatData, refetch, isLoading } = useGetChatQuery();  
-  const socket = useMemo(() => io(socketUrl), [chatRoomId]);
-  
-  const updateSearchParam = useUpdateSearchParams()
-  const {searchTerm} = getSearchParams()  
-  
-    useEffect(() => {       
-      refetch();    
+  const { data: chatData, refetch, isLoading } = useGetChatQuery();
+  const { data: profileData } = useGetProfileQuery();
+  const socket = useMemo(() => io(socketUrl), []);
+  const [user, setUser] = useState();
+
+  const updateSearchParam = useUpdateSearchParams();
+  const { searchTerm } = getSearchParams();
+
+  useEffect(() => {
+    if (profileData) {
+      setUser(profileData?.data?._id);
+    }
+  }, [profileData]);
+
+  useEffect(() => {
+    refetch();
   }, [searchTerm]);
-   
-  useEffect(()=>{
-    console.log("useEffect", chatRoomId);
+
+  useEffect(() => {
+    console.log("user user", user);
     
-socket.on(`getMessage::${chatRoomId}`, (message) => {
+    socket.on(`getMessage::${user}`, (message) => {
       refetch();
     });
     return () => {
-      socket.off(`getMessage::${chatRoomId}`);
+      socket.off(`getMessage::${user}`);
     };
-  },[socket, chatRoomId, refetch ])
-  
-
+  }, [socket, user, refetch]);
 
   return (
     <div className="h-full flex flex-col bg-white rounded-lg border-r">
@@ -47,8 +53,8 @@ socket.on(`getMessage::${chatRoomId}`, (message) => {
           prefix={<IoIosSearch />}
           placeholder="Search..."
           className="h-10 w-[90%] gap-2"
-          allowClear          
-          onChange={(e) => updateSearchParam({searchTerm : e.target.value})}
+          allowClear
+          onChange={(e) => updateSearchParam({ searchTerm: e.target.value })}
         />
         <p className="text-[#343A40] font-semibold">Recent</p>
       </div>
@@ -82,9 +88,10 @@ socket.on(`getMessage::${chatRoomId}`, (message) => {
                     </Badge>
                     <div>
                       <h3>{item?.participants[0]?.full_name}</h3>
-                      <p>{item?.lastMessage?.text.split("").slice(0,25)}
-                        {item?.lastMessage?.text.split("").length > 25 && '...'}
-                        </p>
+                      <p>
+                        {item?.lastMessage?.text.split("").slice(0, 25)}
+                        {item?.lastMessage?.text.split("").length > 25 && "..."}
+                      </p>
                     </div>
                   </div>
 
