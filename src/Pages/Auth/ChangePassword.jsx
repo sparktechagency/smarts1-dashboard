@@ -137,7 +137,7 @@ const ChangePassword = () => {
           }}
         >
           <Button
-            htmlType="submit"
+            htmltype="submit"
             block
             style={{
               width: "100%",

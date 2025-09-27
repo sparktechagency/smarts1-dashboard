@@ -191,7 +191,7 @@ function CouponModal({
               </ButtonEDU>
               <ButtonEDU
                 actionType="save"
-                htmlType="submit"
+                htmltype="submit"
                 loading={isLoading}
               >
                 Save

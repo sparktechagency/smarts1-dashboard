@@ -194,7 +194,7 @@ const UserProfile = () => {
           <div className="text-end mt-6">
             <Form.Item>
               <Button
-                htmlType="submit"
+                htmltype="submit"
                 block
                 style={{
                   border: "none",

@@ -250,7 +250,7 @@ export default function FaqCollapse() {
               >
                 Cancel
               </ButtonEDU>
-              <ButtonEDU actionType="save" htmlType="submit">
+              <ButtonEDU actionType="save" htmltype="submit">
                 Save
               </ButtonEDU>
             </div>

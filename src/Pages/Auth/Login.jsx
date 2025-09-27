@@ -9,42 +9,37 @@ import Cookies from "js-cookie";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [login, {isLoading}] = useLoginMutation();
+  const [login, { isLoading }] = useLoginMutation();
 
-  const [form] = useForm()
+  const [form] = useForm();
 
-    useEffect(() => {
+  useEffect(() => {
     const storedData = localStorage.getItem("auth");
     if (storedData) {
       form.setFieldsValue(JSON.parse(storedData));
     }
   }, []);
 
-
   const onFinish = async (values) => {
-
     try {
-      console.log("values", values)
-      // const res = await login(values);
-  const res = await login(values).unwrap();  
-    
-    console.log("res", res);
-    
-    toast.success(res?.message);
-    Cookies.set("accessToken", res?.data?.accessToken);
-    Cookies.set("refreshToken", res?.data?.refreshToken);
-  
-    if (res?.success && values?.remember) {
-      localStorage.setItem("auth",JSON.stringify({email: values?.email, password: values?.password,}));
-    }
+      const res = await login(values).unwrap();
 
-    navigate("/")
+      toast.success(res?.message);
+      Cookies.set("accessToken", res?.data?.accessToken);
+      Cookies.set("refreshToken", res?.data?.refreshToken);
 
-    form.resetFields();
+      if (res?.success && values?.remember) {
+        localStorage.setItem(
+          "auth",
+          JSON.stringify({ email: values?.email, password: values?.password })
+        );
+      }
+
+      navigate("/")
+
+      form.resetFields();
     } catch (error) {
-      console.log("sdafasdf", error)
-      //  toast.error((error)?.data?.message)
-       toast.error(error)
+      toast.error(error?.data?.message);
     }
   };
 
@@ -119,7 +114,7 @@ const Login = () => {
 
         <Form.Item style={{ marginBottom: 0 }}>
           <button
-            htmlType="submit"
+            htmltype="submit"
             type="submit"
             style={{
               width: "100%",

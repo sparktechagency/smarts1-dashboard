@@ -237,7 +237,7 @@ const [updateAdminProfile] = useUpdateAdminProfileMutation()
           <Form.Item>
             <Button
               block
-              htmlType="submit"              
+              htmltype="submit"              
               className="bg-smart/80 border-none text-white min-w-20 min-h-10 text-xs rounded-lg"
             >
              Save Changes

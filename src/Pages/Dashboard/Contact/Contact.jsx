@@ -152,7 +152,7 @@ const Contact = () => {
               <ButtonEDU actionType="cancel" onClick={handleCancel}>
                 Cancel
               </ButtonEDU>
-              <ButtonEDU actionType="update" htmlType="submit">
+              <ButtonEDU actionType="update" htmltype="submit">
                 Update
               </ButtonEDU>
             </div>

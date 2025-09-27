@@ -131,7 +131,7 @@ const ResetPassword = () => {
 
           <Form.Item style={{ marginBottom: 0 }}>
             <Button
-              htmlType="submit"
+              htmltype="submit"
               style={{
                 width: "100%",
                 height: 45,

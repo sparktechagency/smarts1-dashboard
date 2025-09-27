@@ -1,51 +1,41 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Input, Avatar, Badge } from "antd";
-import { IoIosSearch } from "react-icons/io";
-import { nanoid } from "@reduxjs/toolkit";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import man from "../../../assets/man.png";
-import { useGetChatQuery } from "../../../redux/apiSlices/chatApi";
-import { imageUrl, socketUrl } from "../../../redux/api/baseApi";
+import { Badge, Input } from "antd";
 import dayjs from "dayjs";
-import GroupChatAvatar from "./GroupChatAvatar";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { IoIosSearch } from "react-icons/io";
+import { Link, useParams } from "react-router-dom";
 import { io } from "socket.io-client";
-import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
+import { socketUrl } from "../../../redux/api/baseApi";
+import { useGetChatQuery } from "../../../redux/apiSlices/chatApi";
 import { getSearchParams } from "../../../utility/getSearchParams";
+import { useUpdateSearchParams } from "../../../utility/updateSearchParams";
+import GroupChatAvatar from "./GroupChatAvatar";
 
 dayjs.extend(relativeTime);
 
-function SidebarContent({ onShareFn }) {
-  const [searchQuery, setSearchQuery] = useState("");
+function SidebarContent({ onShareFn, chatRoomId }) {  
   const usersContainerRef = useRef(null);
-  const { data: chatData, refetch, isLoading } = useGetChatQuery();
-  const { chatRoomId } = useParams();
-  const socket = useMemo(() => io(socketUrl), []);
-  const handleGetData = () => { refetch();};
-  const navigate = useNavigate();
-
-
-
+  const { data: chatData, refetch, isLoading } = useGetChatQuery();  
+  const socket = useMemo(() => io(socketUrl), [chatRoomId]);
+  
   const updateSearchParam = useUpdateSearchParams()
-  const {searchTerm} = getSearchParams()
-
-
+  const {searchTerm} = getSearchParams()  
   
     useEffect(() => {       
       refetch();    
   }, [searchTerm]);
-
-  useEffect(() => {
-
-
-    socket.on(`getMessage::${chatRoomId}`, (message) => {
+   
+  useEffect(()=>{
+    console.log("useEffect", chatRoomId);
+    
+socket.on(`getMessage::${chatRoomId}`, (message) => {
       refetch();
     });
     return () => {
       socket.off(`getMessage::${chatRoomId}`);
     };
-    
-  }, [socket, chatRoomId, refetch, ]);
+  },[socket, chatRoomId, refetch ])
+  
 
 
   return (

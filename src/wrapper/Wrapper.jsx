@@ -4,8 +4,9 @@ import SupportChat from "../Pages/Dashboard/SupportChat/SupportChat";
 
 export function SupportChatWrapper() {
   const { chatRoomId } = useParams();
-  return <SupportChat key={chatRoomId} />;
+  return <SupportChat key={chatRoomId} chatRoomId={chatRoomId} />;
 }
+
 
 export function ChatRoomWrapper() {
   const { chatRoomId } = useParams();

@@ -145,7 +145,7 @@ const ChangePassword = () => {
               <div style={{ width: "100%", position: "relative" }}>
                 <Form.Item>
                   <Button
-                    htmlType="submit"
+                    htmltype="submit"
                     block
                     style={{
                       border: "none",
