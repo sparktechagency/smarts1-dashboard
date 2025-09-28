@@ -20,5 +20,5 @@ export const api = createApi({
 });
 
 export const imageUrl = import.meta.env.VITE_IMAGE_URL;
-export const socketUrl = "http://157.241.91.8:6003";
+export const socketUrl = import.meta.env.VITE_SOCKET_URL;
 
